@@ -1,3 +1,4 @@
+version: '3.9'
 x-base_service: &base_service
     ports:
       - "${WEBUI_PORT:-7860}:7860"
@@ -13,23 +14,28 @@ x-base_service: &base_service
               - driver: nvidia
                 device_ids: ['0']
                 capabilities: [compute, utility]
-
 name: webui-docker
-
 services:
   download:
     build: ./services/download/
     profiles: ["download"]
     volumes:
       - *v1
-
   auto: &automatic
     <<: *base_service
     profiles: ["auto"]
     build: ./services/AUTOMATIC1111
-    image: sd-auto:78
+    image: sd-auto:72
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
+
+  forge: &forge
+    <<: *base_service
+    profiles: ["forge"]
+    build: ./services/forge
+    image: sd-forge-fgcustom:72
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
   auto-cpu:
     <<: *automatic
@@ -37,16 +43,27 @@ services:
     deploy: {}
     environment:
       - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
-
+  invoke: &invoke
+    <<: *base_service
+    profiles: ["invoke"]
+    build: ./services/invoke/
+    image: sd-invoke:30
+    environment:
+      - PRELOAD=true
+      - CLI_ARGS=--xformers
+  # invoke-cpu:
+  #   <<: *invoke
+  #   profiles: ["invoke-cpu"]
+  #   environment:
+  #     - PRELOAD=true
+  #     - CLI_ARGS=--always_use_cpu
   comfy: &comfy
     <<: *base_service
     profiles: ["comfy"]
     build: ./services/comfy/
-    image: sd-comfy:7
+    image: sd-comfy:6
     environment:
       - CLI_ARGS=
-
-
   comfy-cpu:
     <<: *comfy
     profiles: ["comfy-cpu"]
