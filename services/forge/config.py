@@ -76,4 +76,3 @@ if __name__ == '__main__':
   else:
     check_and_replace_config(DEFAULT_FILEPATH)
 
-

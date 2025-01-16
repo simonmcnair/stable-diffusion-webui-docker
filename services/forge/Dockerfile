@@ -2,7 +2,6 @@ FROM alpine/git:2.36.2 AS download
 
 COPY clone.sh /clone.sh
 
-
 RUN . /clone.sh stable-diffusion-stability-ai https://github.com/Stability-AI/stablediffusion.git cf1d67a6fd5ea1aa600c4df58e5b47da45f6bdbf \
   && rm -rf assets data/**/*.png data/**/*.jpg data/**/*.gif
 
@@ -35,7 +34,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
-
 ENV ROOT=/stable-diffusion-webui-forge
 
 COPY --from=download /repositories/ ${ROOT}/repositories/
@@ -50,7 +48,6 @@ RUN git clone https://github.com/lllyasviel/huggingface_guess.git /tmp/huggingfa
 # Ensure torchvision is correctly installed
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip install torchvision==0.18.1
-
 
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip install pyngrok xformers==0.0.27 pytorch_lightning torchdiffeq torchsde \
