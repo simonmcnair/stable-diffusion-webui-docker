@@ -13,6 +13,7 @@ RUN . /clone.sh k-diffusion https://github.com/crowsonkb/k-diffusion.git ab527a9
 RUN . /clone.sh clip-interrogator https://github.com/pharmapsychotic/clip-interrogator 2cf03aaf6e704197fd0dae7c7f96aa59cf1b11c9
 RUN . /clone.sh generative-models https://github.com/Stability-AI/generative-models 45c443b316737a4ab6e40413d7794a7f5657c19f
 RUN . /clone.sh stable-diffusion-webui-assets https://github.com/AUTOMATIC1111/stable-diffusion-webui-assets.git 6f7db241d2f8ba7457bac5ca9753331f0c266917
+RUN . /clone.sh huggingface_guess https://github.com/lllyasviel/huggingface_guess.git 70942022b6bcd17d941c1b4172804175758618e2
 
 
 FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
@@ -42,8 +43,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
   pip install -r ${ROOT}/repositories/CodeFormer/requirements.txt
 
 # Clone and copy huggingface_guess module
-RUN git clone https://github.com/lllyasviel/huggingface_guess.git /tmp/huggingface_guess && \
-  cp -r /tmp/huggingface_guess/huggingface_guess ${ROOT}/huggingface_guess
+#RUN git clone https://github.com/lllyasviel/huggingface_guess.git /tmp/huggingface_guess && \
+#  cp -r /tmp/huggingface_guess/huggingface_guess ${ROOT}/huggingface_guess
 
 # Ensure torchvision is correctly installed
 RUN --mount=type=cache,target=/root/.cache/pip \
