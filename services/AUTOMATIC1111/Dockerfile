@@ -14,8 +14,8 @@ RUN . /clone.sh generative-models https://github.com/Stability-AI/generative-mod
 RUN . /clone.sh stable-diffusion-webui-assets https://github.com/AUTOMATIC1111/stable-diffusion-webui-assets 6f7db241d2f8ba7457bac5ca9753331f0c266917
 
 
-FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-#FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+#FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
@@ -57,7 +57,8 @@ COPY . /docker
 RUN \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
   # one of the ugliest hacks I ever wrote \
-  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py && \
+  # updated from 3.10.to 3.11
+  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py && \
   git config --global --add safe.directory '*'
 
 WORKDIR ${ROOT}
