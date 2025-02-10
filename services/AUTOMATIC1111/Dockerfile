@@ -31,7 +31,7 @@ WORKDIR /
 RUN --mount=type=cache,target=/root/.cache/pip \
   git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git && \
   cd stable-diffusion-webui && \
-  git reset --hard v1.10.0 && \
+  git reset --hard v1.10.1 && \
   pip install -r requirements_versions.txt
 
 RUN pip install --upgrade typing-extensions
