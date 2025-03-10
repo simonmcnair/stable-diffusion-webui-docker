@@ -16,6 +16,8 @@ jobs:
           - auto
           - comfy
           - download
+          - fooocus
+          - forge
     runs-on: ubuntu-latest
     name: ${{ matrix.profile }}
     steps:
