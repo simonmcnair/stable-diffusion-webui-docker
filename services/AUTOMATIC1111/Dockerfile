@@ -67,7 +67,7 @@ RUN if [ "$PUID" -ne "0" ]; then \
 WORKDIR /
 ENV ROOT=/stable-diffusion-webui
 
-RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/sd \
   git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ${ROOT} && \
   cd stable-diffusion-webui && \
   git reset --hard v1.10.1 && \
@@ -75,7 +75,6 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
 
 RUN pip install --upgrade typing-extensions
 
-RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 RUN \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
@@ -85,13 +84,13 @@ RUN \
   git config --global --add safe.directory '*'
 
 # drop permissions (if build targets non root)
-USER $PUID:$PGID
+#USER $PUID:$PGID
 
 
 COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
 
-RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/repos \
   pip install pyngrok xformers==0.0.26.post1 \
   git+https://github.com/TencentARC/GFPGAN.git@8d2447a2d918f8eba5a4a01463fd48e45126a379 \
   git+https://github.com/openai/CLIP.git@d50d76daa670286dd6cacf3bcd80b5e4823fc8e1 \
@@ -101,7 +100,9 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
 # maybe move this up to the dependencies list.
 ENV LD_PRELOAD=libtcmalloc.so
 
-COPY --chown=$PUID:$PGID . /docker
+COPY . /docker
+RUN chown -R "$PUID:$PGID" "${ROOT}"
+RUN chown -R "$PUID:$PGID" /docker
 
 WORKDIR ${ROOT}
 ENV NVIDIA_VISIBLE_DEVICES=all
