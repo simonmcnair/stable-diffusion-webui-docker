@@ -76,6 +76,12 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
 
 RUN chown -R "$PUID:$PGID" "${ROOT}"
 
+RUN \
+  # mv ${ROOT}/style.css ${ROOT}/user.css && \
+  # one of the ugliest hacks I ever wrote \
+  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py && \
+  git config --global --add safe.directory '*'
+
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
 
@@ -105,11 +111,6 @@ ENV LD_PRELOAD=libtcmalloc.so
 
 COPY --chown=$PUID:$PGID . /docker
 
-RUN \
-  # mv ${ROOT}/style.css ${ROOT}/user.css && \
-  # one of the ugliest hacks I ever wrote \
-  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py && \
-  git config --global --add safe.directory '*'
 
 WORKDIR ${ROOT}
 ENV NVIDIA_VISIBLE_DEVICES=all
