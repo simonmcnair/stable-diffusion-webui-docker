@@ -41,7 +41,6 @@ RUN if [ "$PUID" -ne "0" ]; then \
       echo "root group detected" ; \
     fi
 
-RUN chown -R "$PUID:$PGID" /stable-diffusion
 USER $PUID:$PGID
 
 ENV ROOT=/stable-diffusion
@@ -51,6 +50,8 @@ RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
   git checkout master && \
   git reset --hard 276f8fce9f5a80b500947fb5745a4dde9e84622d && \
   pip install -r requirements.txt
+
+RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 WORKDIR ${ROOT}
 COPY --chown=$PUID:$PGID . /docker
