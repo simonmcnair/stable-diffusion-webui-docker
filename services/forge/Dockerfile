@@ -82,7 +82,7 @@ ENV ROOT=/stable-diffusion-webui-forge
 
 COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   pip install -r ${ROOT}/repositories/CodeFormer/requirements.txt
 
 # Clone and copy huggingface_guess module
