@@ -65,8 +65,10 @@ RUN if [ "$PUID" -ne "0" ]; then \
     fi
 
 WORKDIR /
+ENV ROOT=/stable-diffusion-webui
+
 RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
-  git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git && \
+  git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ${ROOT} && \
   cd stable-diffusion-webui && \
   git reset --hard v1.10.1 && \
   pip install -r requirements_versions.txt
@@ -77,7 +79,7 @@ RUN chown -R "$PUID:$PGID" /stable-diffusion-webui
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
-ENV ROOT=/stable-diffusion-webui
+
 
 COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
