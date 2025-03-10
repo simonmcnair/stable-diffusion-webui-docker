@@ -92,7 +92,6 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
 # maybe move this up to the dependencies list.
 ENV LD_PRELOAD=libtcmalloc.so
 
-COPY . /docker
 COPY --chown=$PUID:$PGID . /docker
 RUN \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
