@@ -62,6 +62,9 @@ echo "Installing extension dependencies (if any)"
 chown -R $PUID:$PGID ~/.cache/
 chmod 766 ~/.cache/
 
+chown -R $PUID:$PGID /output
+chmod 766 /output
+
 shopt -s nullglob
 # For install.py, please refer to https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Developing-extensions#installpy
 list=(./extensions/*/install.py)
