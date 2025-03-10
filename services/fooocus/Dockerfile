@@ -50,7 +50,6 @@ ARG BRANCH=main SHA=e2f9bcb11d06216d6800676c48d8d74d6fd77a4b
 
 ENV ROOT=/stable-diffusion
 
-RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
@@ -62,6 +61,7 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   git reset --hard ${SHA} && \
   pip install -r requirements_versions.txt
 
+RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 RUN --mount=type=cache,target=${USER_HOME}/.cache/pip  \
   --mount=type=bind,from=xformers,source=/wheel.whl,target=/xformers-0.0.21-cp310-cp310-linux_x86_64.whl \
