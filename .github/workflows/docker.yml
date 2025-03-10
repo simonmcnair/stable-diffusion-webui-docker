@@ -62,8 +62,8 @@ jobs:
              file: ${{ matrix.dockerfile }}
              push: true
              #This is needed because it is called main instead of master to get the latest tag in docker
-             tags: |
+            # tags: |
                 # set latest tag for default branch
-                type=raw,value=latest,enable={{is_default_branch}}
-             #tags: ${{ steps.meta.outputs.tags }}
+            #    type=raw,value=latest,enable={{is_default_branch}}
+             tags: ${{ steps.meta.outputs.tags }}
              labels: ${{ steps.meta.outputs.labels }}
