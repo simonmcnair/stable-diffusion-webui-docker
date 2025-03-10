@@ -25,7 +25,45 @@ RUN --mount=type=cache,target=/var/cache/apt \
   # we need those
   apt-get install -y fonts-dejavu-core rsync git jq moreutils aria2 \
   # extensions needs those
-  ffmpeg libglfw3-dev libgles2-mesa-dev pkg-config libcairo2 libcairo2-dev build-essential
+  ffmpeg libglfw3-dev libgles2-mesa-dev pkg-config libcairo2 libcairo2-dev build-essential && \
+  apt-get clean
+
+ARG PUID=0
+ARG PGID=0
+ARG USER_HOME=/root
+# set build args as container environment variables for entrypoint reference
+ENV PUID=$PUID
+ENV PGID=$PGID
+ENV USER_HOME=$USER_HOME
+
+# if user home does not exist, create it
+RUN mkdir -p "$USER_HOME"
+
+# home already exists, chown it
+RUN chown -R "${PUID}:${PGID}" "$USER_HOME"
+
+# Only groupadd if we're non root
+RUN if [ "$PGID" -ne "0" ]; then \
+      echo non root group detected; \
+      groupadd \
+        --gid "$PGID" \
+        stablediffusion ;\
+    else \
+      echo "root group detected" ; \
+    fi
+
+# Only useradd if we're non root
+RUN if [ "$PUID" -ne "0" ]; then \
+      echo non root user detected; \
+      useradd \
+        --gid="$PGID" \
+        --no-user-group \
+        -M \
+        --home "$USER_HOME" \
+        stablediffusion ; \
+    else \
+      echo "root group detected" ; \
+    fi
 
 
 WORKDIR /
@@ -35,9 +73,14 @@ RUN --mount=type=cache,target=/root/.cache/pip \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
+RUN chown -R "$PUID:$PGID" /stable-diffusion-webui
+
+# drop permissions (if build targets non root)
+USER $PUID:$PGID
+
 ENV ROOT=/stable-diffusion-webui-forge
 
-COPY --from=download /repositories/ ${ROOT}/repositories/
+COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip install -r ${ROOT}/repositories/CodeFormer/requirements.txt
