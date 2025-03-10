@@ -53,7 +53,7 @@ RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
   pip install -r requirements.txt
 
 WORKDIR ${ROOT}
-COPY . /docker/
+COPY --chown=$PUID:$PGID . /docker
 RUN chmod u+x /docker/entrypoint.sh && cp /docker/extra_model_paths.yaml ${ROOT}
 
 ENV NVIDIA_VISIBLE_DEVICES=all PYTHONPATH="${PYTHONPATH}:${PWD}" CLI_ARGS=""
