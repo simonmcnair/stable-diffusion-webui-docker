@@ -75,7 +75,7 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
 
 RUN pip install --upgrade typing-extensions
 
-RUN chown -R "$PUID:$PGID" /stable-diffusion-webui
+RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
