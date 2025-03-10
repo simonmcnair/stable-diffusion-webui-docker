@@ -31,7 +31,8 @@ rsync --info=NAME ${ROOT}/models/karlo/ /data/models/karlo/
 
 declare -A MOUNTS
 
-MOUNTS["/root/.cache"]="/data/.cache"
+#MOUNTS["/root/.cache"]="/data/.cache"
+MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
 MOUNTS["${ROOT}/models"]="/data/models"
 
 MOUNTS["${ROOT}/embeddings"]="/data/embeddings"
@@ -58,8 +59,7 @@ done
 
 echo "Installing extension dependencies (if any)"
 
-# because we build our container as root:
-chown -R root ~/.cache/
+chown -R $PUID:$PGID ~/.cache/
 chmod 766 ~/.cache/
 
 shopt -s nullglob
