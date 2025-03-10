@@ -57,7 +57,7 @@ RUN chown -R "$PUID:$PGID" /stable-diffusion-webui
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
 
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   git clone https://github.com/lllyasviel/Fooocus.git ${ROOT} && \
   cd ${ROOT} && \
   git checkout ${BRANCH} && \
@@ -65,13 +65,13 @@ RUN --mount=type=cache,target=/root/.cache/pip \
   pip install -r requirements_versions.txt
 
 
-RUN --mount=type=cache,target=/root/.cache/pip  \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip  \
   --mount=type=bind,from=xformers,source=/wheel.whl,target=/xformers-0.0.21-cp310-cp310-linux_x86_64.whl \
   pip install /xformers-0.0.21-cp310-cp310-linux_x86_64.whl
 
 WORKDIR ${ROOT}
 
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   git fetch && \
   git checkout ${BRANCH} && \
   git reset --hard ${SHA} && \
