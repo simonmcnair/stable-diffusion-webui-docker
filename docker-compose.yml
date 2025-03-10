@@ -20,6 +20,7 @@ services:
     profiles: ["download"]
     volumes:
       - *v1
+      
   auto: &automatic
     <<: *base_service
     profiles: ["auto"]
@@ -27,6 +28,8 @@ services:
     image: sd-auto:80
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
+      - PUID=1000
+      - PGID=1000
 
   forge: &forge
     <<: *base_service
@@ -35,6 +38,8 @@ services:
     image: sd-forge:80
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+      - PUID=1000
+      - PGID=1000
 
   auto-cpu:
     <<: *automatic
@@ -42,6 +47,9 @@ services:
     deploy: {}
     environment:
       - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
+      - PUID=1000
+      - PGID=1000
+
   invoke: &invoke
     <<: *base_service
     profiles: ["invoke"]
@@ -50,12 +58,16 @@ services:
     environment:
       - PRELOAD=true
       - CLI_ARGS=--xformers
+      - PUID=1000
+      - PGID=1000
+
   # invoke-cpu:
   #   <<: *invoke
   #   profiles: ["invoke-cpu"]
   #   environment:
   #     - PRELOAD=true
   #     - CLI_ARGS=--always_use_cpu
+
   comfy: &comfy
     <<: *base_service
     profiles: ["comfy"]
@@ -63,12 +75,17 @@ services:
     image: sd-comfy:6
     environment:
       - CLI_ARGS=
+      - PUID=1000
+      - PGID=1000
+
   comfy-cpu:
     <<: *comfy
     profiles: ["comfy-cpu"]
     deploy: {}
     environment:
       - CLI_ARGS=--cpu
+      - PUID=1000
+      - PGID=1000
 
   fooocus: &fooocus
     <<: *base_service
@@ -77,3 +94,5 @@ services:
     image: sd-fooocus:3
     environment:
       - CLI_ARGS=
+      - PUID=1000
+      - PGID=1000
