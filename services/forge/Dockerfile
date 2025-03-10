@@ -67,7 +67,7 @@ RUN if [ "$PUID" -ne "0" ]; then \
 
 
 WORKDIR /
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git && \
   cd stable-diffusion-webui-forge && \
   sed -i '/torch/d' requirements_versions.txt && \
@@ -90,17 +90,17 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 #  cp -r /tmp/huggingface_guess/huggingface_guess ${ROOT}/huggingface_guess
 
 # Ensure torchvision is correctly installed
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   pip install torchvision==0.18.1
 
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   pip install pyngrok xformers==0.0.27 pytorch_lightning torchdiffeq torchsde \
   git+https://github.com/TencentARC/GFPGAN.git@8d2447a2d918f8eba5a4a01463fd48e45126a379 \
   git+https://github.com/openai/CLIP.git@d50d76daa670286dd6cacf3bcd80b5e4823fc8e1 \
   git+https://github.com/mlfoundations/open_clip.git@v2.20.0 
 # there seems to be a memory leak (or maybe just memory not being freed fast enough) that is fixed by this version of malloc
 # maybe move this up to the dependencies list.
-RUN apt-get -y install libgoogle-perftools-dev && apt-get clean
+
 ENV LD_PRELOAD=libtcmalloc.so
 
 COPY . /docker
