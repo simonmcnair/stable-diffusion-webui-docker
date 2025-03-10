@@ -42,20 +42,7 @@ services:
     deploy: {}
     environment:
       - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
-  invoke: &invoke
-    <<: *base_service
-    profiles: ["invoke"]
-    build: ./services/invoke/
-    image: sd-invoke:30
-    environment:
-      - PRELOAD=true
-      - CLI_ARGS=--xformers
-  # invoke-cpu:
-  #   <<: *invoke
-  #   profiles: ["invoke-cpu"]
-  #   environment:
-  #     - PRELOAD=true
-  #     - CLI_ARGS=--always_use_cpu
+
   comfy: &comfy
     <<: *base_service
     profiles: ["comfy"]
@@ -63,6 +50,7 @@ services:
     image: sd-comfy:6
     environment:
       - CLI_ARGS=
+
   comfy-cpu:
     <<: *comfy
     profiles: ["comfy-cpu"]
