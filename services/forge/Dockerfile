@@ -65,6 +65,7 @@ RUN if [ "$PUID" -ne "0" ]; then \
       echo "root group detected" ; \
     fi
 
+ENV ROOT=/stable-diffusion-webui-forge
 
 WORKDIR /
 RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
@@ -73,12 +74,11 @@ RUN --mount=type=cache,target=${USER_HOME}/.cache/pip \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
-RUN chown -R "$PUID:$PGID" /stable-diffusion-webui-forge
+RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
 
-ENV ROOT=/stable-diffusion-webui-forge
 
 COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
