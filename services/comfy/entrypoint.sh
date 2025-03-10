@@ -28,8 +28,6 @@ if [ -f "/data/config/comfy/startup.sh" ]; then
   popd
 fi
 
-chown -R root ~/.cache/
-chmod 766 ~/.cache/
 chown -R $PUID:$PGID ~/.cache/
 chmod 776 ~/.cache/
 
