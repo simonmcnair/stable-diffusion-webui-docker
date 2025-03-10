@@ -6,7 +6,7 @@ mkdir -vp /data/config/comfy/custom_nodes
 
 declare -A MOUNTS
 
-MOUNTS["/root/.cache"]="/data/.cache"
+MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
 MOUNTS["${ROOT}/input"]="/data/config/comfy/input"
 MOUNTS["${ROOT}/output"]="/output/comfy"
 
@@ -27,5 +27,10 @@ if [ -f "/data/config/comfy/startup.sh" ]; then
   . /data/config/comfy/startup.sh
   popd
 fi
+
+chown -R root ~/.cache/
+chmod 766 ~/.cache/
+chown -R $PUID:$PGID ~/.cache/
+chmod 776 ~/.cache/
 
 exec "$@"
