@@ -73,7 +73,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
-RUN chown -R "$PUID:$PGID" /stable-diffusion-webui
+RUN chown -R "$PUID:$PGID" /stable-diffusion-webui-forge
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
