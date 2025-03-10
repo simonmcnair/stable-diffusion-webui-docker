@@ -45,14 +45,12 @@ RUN if [ "$PUID" -ne "0" ]; then \
       echo "root group detected" ; \
     fi
 
-
-
 # set this to your target branch commit
 ARG BRANCH=main SHA=e2f9bcb11d06216d6800676c48d8d74d6fd77a4b
 
 ENV ROOT=/stable-diffusion
 
-RUN chown -R "$PUID:$PGID" /stable-diffusion-webui
+RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
