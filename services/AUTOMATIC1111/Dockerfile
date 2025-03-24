@@ -80,8 +80,10 @@ RUN pip install --upgrade typing-extensions
 
 
 RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
+      echo Python 3.10 detected; \
       sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
     elif [ -d "/opt/conda/lib/python3.11" ]; then \
+      echo Python 3.11 detected; \
       sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
     fi && \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
