@@ -62,11 +62,19 @@ ENV LD_PRELOAD=libtcmalloc.so
 COPY . /docker
 RUN pip install pydantic==1.10.21
 
-RUN \
+RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
+      echo Python 3.10 detected; \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
+    elif [ -d "/opt/conda/lib/python3.11" ]; then \
+      echo Python 3.11 detected; \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
+    fi && \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
   # one of the ugliest hacks I ever wrote \
-  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py && \
+  # updated from 3.10.to 3.11
   git config --global --add safe.directory '*'
+
+
 
 WORKDIR ${ROOT}
 ENV NVIDIA_VISIBLE_DEVICES=all
