@@ -74,12 +74,19 @@ RUN --mount=type=cache,target=/root/.cache/forge-repo \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
-
-RUN \
+RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
+      echo Python 3.10 detected; \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
+    elif [ -d "/opt/conda/lib/python3.11" ]; then \
+      echo Python 3.11 detected; \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
+    fi && \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
   # one of the ugliest hacks I ever wrote \
-  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py && \
+  # updated from 3.10.to 3.11
   git config --global --add safe.directory '*'
+
+
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID
