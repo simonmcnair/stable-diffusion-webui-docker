@@ -60,7 +60,7 @@ RUN apt-get -y install libgoogle-perftools-dev && apt-get clean
 ENV LD_PRELOAD=libtcmalloc.so
 
 COPY . /docker
-RUN pip install pydantic ==1.10.21
+RUN pip install pydantic==1.10.21
 
 RUN \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
