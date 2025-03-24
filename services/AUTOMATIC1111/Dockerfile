@@ -79,11 +79,14 @@ RUN --mount=type=cache,target=/root/.cache/sd \
 RUN pip install --upgrade typing-extensions
 
 
-RUN \
+RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
+    elif [ -d "/opt/conda/lib/python3.11" ]; then \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
+    fi && \
   # mv ${ROOT}/style.css ${ROOT}/user.css && \
   # one of the ugliest hacks I ever wrote \
   # updated from 3.10.to 3.11
-  sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py && \
   git config --global --add safe.directory '*'
 
 # drop permissions (if build targets non root)
