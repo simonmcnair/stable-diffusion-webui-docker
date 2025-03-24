@@ -2,6 +2,12 @@ I have forked this as AbdBarho hasn't been around for a while.  I'm not great wi
 
 I am happy to look at PR's as and when.  Also happy to pass this back, as and whe, and if, they return.
 
+supports:
+- AUTOMATIC1111
+- comfy
+- fooocus
+- forge
+- reforge
 
 # Stable Diffusion WebUI Docker
 
