@@ -47,10 +47,10 @@ RUN git clone https://github.com/lllyasviel/huggingface_guess.git /tmp/huggingfa
 
 # Ensure torchvision is correctly installed
 RUN --mount=type=cache,target=/root/.cache/pip \
-  pip install torchvision==0.18.1
+  pip install torchvision==0.18.1 
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-  pip install pyngrok xformers==0.0.27 pytorch_lightning torchdiffeq torchsde \
+  pip install pyngrok xformers==0.0.27 pytorch_lightning==1.6.5 torchdiffeq torchsde \
   git+https://github.com/TencentARC/GFPGAN.git@8d2447a2d918f8eba5a4a01463fd48e45126a379 \
   git+https://github.com/openai/CLIP.git@d50d76daa670286dd6cacf3bcd80b5e4823fc8e1 \
   git+https://github.com/mlfoundations/open_clip.git@v2.20.0 
