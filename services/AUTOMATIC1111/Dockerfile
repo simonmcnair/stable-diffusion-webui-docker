@@ -73,7 +73,7 @@ ENV ROOT=/stable-diffusion-webui
 RUN --mount=type=cache,target=/root/.cache/sd \
   git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ${ROOT} && \
   cd stable-diffusion-webui && \
-  git reset --hard v1.10.1 # && \
+  git reset --hard v1.10.1  && \
   pip install -r requirements_versions.txt
 
 RUN pip install --upgrade typing-extensions
