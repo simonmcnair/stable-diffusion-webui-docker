@@ -1,3 +1,8 @@
+I have forked this as AbdBarho hasn't been around for a while.  I'm not great with git, Linux , docker or stable diffusion but I manage to get along a bit.  Slowly.  with more commits than it takes.
+
+I am happy to look at PR's as and when.  Also happy to pass this back, as and whe, and if, they return.
+
+
 # Stable Diffusion WebUI Docker
 
 Run Stable Diffusion on your machine with a nice UI without any hassle!
