@@ -45,7 +45,7 @@ USER $PUID:$PGID
 
 ENV ROOT=/stable-diffusion
 RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
-  git clone https://github.com/comfyanonymous/ComfyUI.git ${ROOT} && \
+  git clone -b v0.3.10 --depth=1 https://github.com/comfyanonymous/ComfyUI.git ${ROOT} && \
   cd ${ROOT} && \
   git checkout master && \
   git reset --hard 276f8fce9f5a80b500947fb5745a4dde9e84622d && \
