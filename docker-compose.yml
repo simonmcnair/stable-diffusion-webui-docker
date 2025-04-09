@@ -23,8 +23,7 @@ services:
   auto: &automatic
     <<: *base_service
     profiles: ["auto"]
-    build: ./services/AUTOMATIC1111
-    image: sd-auto:80
+    image: simonmcnair/automatic1111:master
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
@@ -44,16 +43,14 @@ services:
   reforge: &reforge
     <<: *base_service
     profiles: ["reforge"]
-    build: ./services/reforge
-    image: sd-reforge:80
+    image: simonmcnair/reforge:master
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
   forge: &forge
     <<: *base_service
     profiles: ["forge"]
-    build: ./services/forge
-    image: sd-forge:80
+    image: simonmcnair/forge:master
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
@@ -67,8 +64,7 @@ services:
   comfy: &comfy
     <<: *base_service
     profiles: ["comfy"]
-    build: ./services/comfy/
-    image: sd-comfy:6
+    image: simonmcnair/comfy:master
     environment:
       - CLI_ARGS=
 
@@ -82,7 +78,6 @@ services:
   fooocus: &fooocus
     <<: *base_service
     profiles: ["fooocus"]
-    build: ./services/fooocus/
-    image: sd-fooocus:3
+    image: simonmcnair/fooocus:master
     environment:
       - CLI_ARGS=
