@@ -30,9 +30,7 @@ services:
     auto-rocm:
     <<: *base_service
     profiles: ["auto-rocm"]
-    build: 
-      context: ./services/AUTOMATIC1111
-      dockerfile: Dockerfile.rocm
+    image: simonmcnair/automatic1111-rocm:master
     devices:
       - "/dev/kfd"
       - "/dev/dri"
