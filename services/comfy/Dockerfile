@@ -45,9 +45,8 @@ USER $PUID:$PGID
 
 ENV ROOT=/stable-diffusion
 RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
-  cd ${ROOT} && \
   git clone -b v0.3.10 --depth=1 https://github.com/comfyanonymous/ComfyUI.git ${ROOT} && \
-  pip install -r requirements.txt
+  pip install -r ${ROOT}/requirements.txt
 
 RUN git clone -b 3.6.5 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${ROOT}/custom_nodes/comfyui-manager && \
   pip install -r ${ROOT}/custom_nodes/comfyui-manager/requirements.txt
