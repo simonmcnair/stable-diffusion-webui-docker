@@ -16,7 +16,7 @@ x-base_service: &base_service
 name: webui-docker
 services:
   download:
-    build: ./services/download/
+    image: simonmcnair/download:master
     profiles: ["download"]
     volumes:
       - *v1
