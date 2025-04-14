@@ -58,17 +58,29 @@ RUN if [ "$PGID" -ne "0" ]; then \
 RUN if [ "$PUID" -ne "0" ]; then \
       echo non root user detected; \
       useradd \
+        --uid "$PUID" \
         --gid="$PGID" \
         --no-user-group \
         -M \
+        --create-home
         --home "$USER_HOME" \
-        stablediffusion ; \
+        stablediffusion stablediffusion ; \
     else \
       echo "root group detected" ; \
     fi
 
-WORKDIR /
+
 ENV ROOT=/stable-diffusion-webui
+WORKDIR ${ROOT}
+RUN chown stablediffusion:stablediffusion /${ROOT}
+
+USER stablediffusion
+# Set environment variables for venv
+ENV VIRTUAL_ENV=/home/stablediffusion/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Create virtual environment
+RUN python -m venv $VIRTUAL_ENV
 
 RUN --mount=type=cache,target=/root/.cache/sd \
   git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ${ROOT} && \
