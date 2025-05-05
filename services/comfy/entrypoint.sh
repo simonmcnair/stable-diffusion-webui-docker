@@ -28,6 +28,11 @@ if [ -f "/data/config/comfy/startup.sh" ]; then
   popd
 fi
 
+# Only chown if not running as root (UID != 0)
+if [ "$(id -u)" -ne 0 ]; then
+  chown -R "$(id -u):$(id -g)" ~ 2>/dev/null || true
+fi
+
 chown -R $PUID:$PGID ~/.cache/
 chmod 776 ~/.cache/
 
