@@ -28,7 +28,7 @@ services:
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
-    auto-rocm:
+  auto-rocm:
     <<: *base_service
     profiles: ["auto-rocm"]
     build: 
