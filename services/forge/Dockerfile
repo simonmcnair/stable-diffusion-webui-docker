@@ -20,7 +20,7 @@ FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
-RUN --mount=type=cache,target=/root/apt \
+RUN --mount=type=cache,target=/cache/apt \
   apt-get update && \
   # we need those
   apt-get install -y fonts-dejavu-core rsync git jq moreutils aria2 \
@@ -65,46 +65,53 @@ RUN if [ "$PUID" -ne "0" ]; then \
       echo "root group detected" ; \
     fi
 
+# drop permissions (if build targets non root)
+USER $PUID:$PGID
+
 ENV ROOT=/stable-diffusion-webui-forge
 
 WORKDIR /
-RUN --mount=type=cache,target=/root/.cache/forge-repo \
-  git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git && \
-  cd stable-diffusion-webui-forge && \
-  sed -i '/torch/d' requirements_versions.txt && \
-  pip install -r requirements_versions.txt
+RUN --mount=type=cache,target=/cache/forge-repo \
+  git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git ${ROOT} 
 
-RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
+RUN   sed -i '/torch/d' ${ROOT}/requirements_versions.txt 
+
+# Create and activate a Python virtual environment
+RUN  python3.10 -m venv /venv
+# Ensure the venv is used in subsequent steps
+ENV PATH="/venv/bin:$PATH"
+RUN --mount=type=cache,target=/cache/forgepip \
+  . /venv/bin/activate && \
+  /venv/bin/pip install --upgrade pip && \
+  /venv/bin/pip install -r ${ROOT}/requirements_versions.txt
+
+
+RUN if [ -d "/venv/lib/python3.10" ]; then \
+      echo Python 3.10 VENV detected; \
+      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /venv/lib/python3.10/site-packages/gradio/routes.py  ;\
+    elif [ -d "/opt/conda/lib/python3.10" ]; then \
       echo Python 3.10 detected; \
       sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
     elif [ -d "/opt/conda/lib/python3.11" ]; then \
       echo Python 3.11 detected; \
       sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
     fi && \
-  # mv ${ROOT}/style.css ${ROOT}/user.css && \
-  # one of the ugliest hacks I ever wrote \
-  # updated from 3.10.to 3.11
-  git config --global --add safe.directory '*'
-
-
-
-# drop permissions (if build targets non root)
-USER $PUID:$PGID
-
+    git config --global --add safe.directory '*'
 
 COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
-RUN --mount=type=cache,target=/root/.cache/codeformer pip install -r ${ROOT}/repositories/CodeFormer/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/codeformer /venv/bin/pip install -r ${ROOT}/repositories/CodeFormer/requirements.txt
 
 # Clone and copy huggingface_guess module
 #RUN git clone https://github.com/lllyasviel/huggingface_guess.git /tmp/huggingface_guess && \
 #  cp -r /tmp/huggingface_guess/huggingface_guess ${ROOT}/huggingface_guess
 
 # Ensure torchvision is correctly installed
-RUN --mount=type=cache,target=/root/.cache/torch pip install torchvision==0.18.1
+#RUN --mount=type=cache,target=/cache/torch /venv/bin/pip install torchvision==0.18.1
 
-RUN --mount=type=cache,target=/root/.cache/repos \
-  pip install pyngrok xformers==0.0.27 pytorch_lightning torchdiffeq torchsde \
+RUN --mount=type=cache,target=/cache/repos \
+  /venv/bin/pip install pyngrok xformers==0.0.27 pytorch_lightning torchdiffeq torchsde \
+#  /venv/bin/pip install pyngrok  \
   git+https://github.com/TencentARC/GFPGAN.git@8d2447a2d918f8eba5a4a01463fd48e45126a379 \
   git+https://github.com/openai/CLIP.git@d50d76daa670286dd6cacf3bcd80b5e4823fc8e1 \
   git+https://github.com/mlfoundations/open_clip.git@v2.20.0 
@@ -124,4 +131,4 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV CLI_ARGS=""
 EXPOSE 7860
 ENTRYPOINT ["/docker/entrypoint.sh"]
-CMD python -u webui.py --listen --port 7860 ${CLI_ARGS}
+CMD python3.10 -u webui.py --listen --port 7860 ${CLI_ARGS}
