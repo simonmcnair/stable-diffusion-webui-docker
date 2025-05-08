@@ -2,6 +2,16 @@
 
 set -Eeuo pipefail
 
+# Activate virtual environment
+if [ -f /venv/bin/activate ]; then
+  echo "Activating virtual environment..."
+  source /venv/bin/activate
+else
+  echo "Virtual environment not found at /venv, continuing without it."
+fi
+
+export PIP_CACHE_DIR=/tmp/pip-cache
+
 # TODO: move all mkdir -p ?
 mkdir -p /data/config/forge/scripts/
 # mount scripts individually
