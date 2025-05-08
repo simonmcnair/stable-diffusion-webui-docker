@@ -17,9 +17,9 @@ jobs:
            dockerfile: services/AUTOMATIC1111/Dockerfile
            context: services/AUTOMATIC1111/
     
-        -  image: simonmcnair/AUTOMATIC1111-rocm
-           dockerfile: services/AUTOMATIC1111/Dockerfile.rocm
-           context: services/AUTOMATIC1111/
+   #     -  image: simonmcnair/AUTOMATIC1111-rocm
+   #        dockerfile: services/AUTOMATIC1111/Dockerfile.rocm
+   #        context: services/AUTOMATIC1111/
 
         -  image: simonmcnair/comfy
            dockerfile: services/comfy/Dockerfile
