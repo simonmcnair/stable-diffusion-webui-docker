@@ -1,6 +1,4 @@
 x-base_service: &base_service
-    ports:
-      - "${WEBUI_PORT:-7860}:7860"
     volumes:
       - &v1 ./data:/data
       - &v2 ./output:/output
@@ -8,11 +6,16 @@ x-base_service: &base_service
     tty: true
     deploy:
       resources:
+#        limits:
+#          cpus: 8
+#          memory: 48G
         reservations:
+#          cpus: 4
+#          memory: 24G
           devices:
               - driver: nvidia
                 device_ids: ['0']
-                capabilities: [compute, utility]
+                capabilities: [compute, utility, gpu]
 
 name: webui-docker
 
@@ -28,6 +31,8 @@ services:
     profiles: ["auto"]
     build: ./services/AUTOMATIC1111
     image: sd-auto:78
+    ports:
+      - "${WEBUI_PORT:-7860}:7860"
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
@@ -35,6 +40,8 @@ services:
     <<: *automatic
     profiles: ["auto-cpu"]
     deploy: {}
+    ports:
+      - "${WEBUI_PORT:-7860}:7860"
     environment:
       - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
 
@@ -43,13 +50,34 @@ services:
     profiles: ["comfy"]
     build: ./services/comfy/
     image: sd-comfy:7
+    volumes:
+      - ./data/models:/opt/comfyui/models
+      - ./data/config/comfy/custom_nodes:/opt/comfyui/custom_nodes
+      - ./output/comfy:/opt/comfyui/output
+      - ./data/models/configs:/opt/comfyui/user/default/
+    ports:
+      - "${COMFYUI_PORT:-7861}:7861"
     environment:
+      - COMFYUI_PATH=/opt/comfyui
+      - COMFYUI_MODEL_PATH=/opt/comfyui/models
       - CLI_ARGS=
-
+#      - TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
   comfy-cpu:
     <<: *comfy
     profiles: ["comfy-cpu"]
     deploy: {}
+    ports:
+      - "${COMFYUI_PORT:-7861}:7861"
     environment:
       - CLI_ARGS=--cpu
+
+  auto-full:
+    <<: *base_service
+    profiles: [ "full" ]
+    build: ./services/AUTOMATIC1111
+    image: sd-auto:78
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api
+    ports:
+      - "${WEBUI_PORT:-7860}:7860"
