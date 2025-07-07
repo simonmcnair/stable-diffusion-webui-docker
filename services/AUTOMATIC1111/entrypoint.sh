@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -x
 set -Eeuo pipefail
 
 # TODO: move all mkdir -p ?
@@ -50,6 +50,7 @@ for to_path in "${!MOUNTS[@]}"; do
   rm -rf "${to_path}"
   if [ ! -f "$from_path" ]; then
     mkdir -vp "$from_path"
+#    mkdir -vp "$from_path" || true
   fi
   mkdir -vp "$(dirname "${to_path}")"
   ln -sT "${from_path}" "${to_path}"
