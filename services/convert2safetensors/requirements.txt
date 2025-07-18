@@ -1,0 +1,5 @@
+safetensors
+argparse
+torch
+tqdm
+numpy
