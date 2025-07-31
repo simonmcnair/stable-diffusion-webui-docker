@@ -1,6 +1,2 @@
-/.cache
-/config
-/embeddings
-/models
-/states
-/convert
+/*
+!/.gitignore

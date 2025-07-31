@@ -1,9 +1,7 @@
 x-base_service: &base_service
-    volumes:
-      - &v1 ./data:/data
-      - &v2 ./output:/output
     stop_signal: SIGKILL
     tty: true
+    restart: unless-stopped
     deploy:
       resources:
 #        limits:
@@ -17,6 +15,17 @@ x-base_service: &base_service
                 device_ids: ['0']
                 capabilities: [compute, utility, gpu]
 
+x-auto_service: &auto_service
+    <<: *base_service
+    container_name: auto
+    build: ./services/AUTOMATIC1111
+    image: sd-auto:78
+    ports:
+      - "${WEBUI_PORT:-7860}:7860"
+    volumes:
+      - &v1 ./data:/data
+      - &v2 ./output:/output
+
 name: webui-docker
 
 services:
@@ -26,18 +35,14 @@ services:
     volumes:
       - *v1
 
-  auto: &automatic
-    <<: *base_service
+  auto:
+    <<: *auto_service
     profiles: ["auto"]
-    build: ./services/AUTOMATIC1111
-    image: sd-auto:78
-    ports:
-      - "${WEBUI_PORT:-7860}:7860"
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
   auto-cpu:
-    <<: *automatic
+    <<: *auto_service
     profiles: ["auto-cpu"]
     deploy: {}
     ports:
@@ -45,10 +50,17 @@ services:
     environment:
       - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
 
+  auto-full:
+    <<: *auto_service
+    profiles: [ "full" ]
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --no-half-vae --api
+
   comfy: &comfy
     <<: *base_service
     profiles: ["comfy"]
-    build: ./services/comfy/
+    container_name: comfy
+    build: ./services/comfy
     image: sd-comfy:7
     volumes:
       - ./data/models:/opt/comfyui/models
@@ -72,15 +84,19 @@ services:
     environment:
       - CLI_ARGS=--cpu
 
-  auto-full:
+  swarmui:
     <<: *base_service
-    profiles: [ "full" ]
-    build: ./services/AUTOMATIC1111
-    image: sd-auto:78
-    environment:
-      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api
+    profiles: ["swarmui"]
+    container_name: swarmui
+    build: ./services/swarmui
+    image: sd-swarmui
     ports:
-      - "${WEBUI_PORT:-7860}:7860"
+      - "${SWARMUI_PORT:-7801}:7801"
+    volumes:
+      - ./data/swarmui:/SwarmUI/Data
+#      - "backend:/app/dlbackend"
+      - ./data/models:/SwarmUI/Models
+      - ./output/swarmui:/SwarmUI/Output
 
   convertor:
     <<: *base_service
