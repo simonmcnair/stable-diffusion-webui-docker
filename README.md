@@ -8,6 +8,7 @@ supports:
 - fooocus
 - forge
 - reforge
+- swarmui
 
 # Stable Diffusion WebUI Docker
 

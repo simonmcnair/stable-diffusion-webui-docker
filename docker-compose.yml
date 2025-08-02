@@ -41,39 +41,6 @@ services:
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
-# TODO check docker image
-#  auto-rocm:
-#    <<: *base_service
-#    profiles: ["auto-rocm"]
-#    image: simonmcnair/automatic1111-rocm:master
-#    devices:
-#      - "/dev/kfd"
-#      - "/dev/dri"
-#    deploy: {}
-#    environment:
-#      - CLI_ARGS=--allow-code --medvram --enable-insecure-extension-access --api
-#
-#  reforge: &reforge
-#    <<: *base_service
-#    profiles: ["reforge"]
-#    image: simonmcnair/reforge:master
-#    environment:
-#      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
-#
-#  forge: &forge
-#    <<: *base_service
-#    profiles: ["forge"]
-#    image: simonmcnair/forge:master
-#    environment:
-#      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
-#
-#  fooocus: &fooocus
-#    <<: *base_service
-#    profiles: ["fooocus"]
-#    image: simonmcnair/fooocus:master
-#    environment:
-#      - CLI_ARGS=
-
   auto-cpu:
     <<: *auto_service
     profiles: ["auto-cpu"]
@@ -88,6 +55,19 @@ services:
     profiles: [ "full" ]
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --no-half-vae --api
+
+  auto-rocm:
+    <<: *base_service
+    profiles: ["auto-rocm"]
+    build:
+      context: ./services/AUTOMATIC1111
+      dockerfile: ROCM.dockerfile
+    devices:
+      - "/dev/kfd"
+      - "/dev/dri"
+    deploy: {}
+    environment:
+      - CLI_ARGS=--allow-code --medvram --enable-insecure-extension-access --api
 
   comfy: &comfy
     <<: *base_service
@@ -129,12 +109,38 @@ services:
       - ./data/swarmui:/SwarmUI/Data
 #      - "backend:/app/dlbackend"
       - ./data/models:/SwarmUI/Models
+      - ./data/embeddings:/SwarmUI/Models/Embeddings
       - ./output/swarmui:/SwarmUI/Output
 
-  convertor:
+  reforge: &reforge
     <<: *base_service
-    profiles: [ "convert" ]
-    build: ./services/convert2safetensors
-    image: sd-convert
-    volumes:
-      - ./data/convert:/opt/convert2safetensors/models
+    profiles: ["reforge"]
+    build: ./services/reforge
+    image: sd-reforge:80
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
+  forge: &forge
+    <<: *base_service
+    profiles: ["forge"]
+    build: ./services/forge
+    image: sd-forge:80
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
+  fooocus: &fooocus
+    <<: *base_service
+    profiles: ["fooocus"]
+    build: ./services/fooocus/
+    image: sd-fooocus:3
+    environment:
+      - CLI_ARGS=
+
+# TODO rm old
+#  convertor:
+#    <<: *base_service
+#    profiles: [ "convert" ]
+#    build: ./services/convert2safetensors
+#    image: sd-convert
+#    volumes:
+#      - ./data/convert:/opt/convert2safetensors/models
