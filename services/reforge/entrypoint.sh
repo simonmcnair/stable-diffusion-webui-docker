@@ -1,46 +1,45 @@
 #!/bin/bash
-#set -x
+
 set -Eeuo pipefail
 
 # TODO: move all mkdir -p ?
-mkdir -p /data/config/auto/scripts/
+mkdir -p /data/config/reforge/scripts/
 # mount scripts individually
 
 echo $ROOT
 ls -lha $ROOT
 
 find "${ROOT}/scripts/" -maxdepth 1 -type l -delete
-cp -vrfTs /data/config/auto/scripts/ "${ROOT}/scripts/"
+cp -vrfTs /data/config/reforge/scripts/ "${ROOT}/scripts/"
 
 # Set up config file
-python /docker/config.py /data/config/auto/config.json
+python /docker/config.py /data/config/reforge/config.json
 
-if [ ! -f /data/config/auto/ui-config.json ]; then
-  echo '{}' >/data/config/auto/ui-config.json
+if [ ! -f /data/config/reforge/ui-config.json ]; then
+  echo '{}' >/data/config/reforge/ui-config.json
 fi
 
-if [ ! -f /data/config/auto/styles.csv ]; then
-  touch /data/config/auto/styles.csv
+if [ ! -f /data/config/reforge/styles.csv ]; then
+  touch /data/config/reforge/styles.csv
 fi
 
 # copy models from original models folder
 mkdir -p /data/models/VAE-approx/ /data/models/karlo/
 
-rsync --info=NAME ${ROOT}/models/VAE-approx/ /data/models/VAE-approx/
-rsync --info=NAME ${ROOT}/models/karlo/ /data/models/karlo/
+rsync -a --info=NAME ${ROOT}/models/VAE-approx/ /data/models/VAE-approx/
+rsync -a --info=NAME ${ROOT}/models/karlo/ /data/models/karlo/
 
 declare -A MOUNTS
 
-#MOUNTS["/root/.cache"]="/data/.cache"
-MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
+MOUNTS["/root/.cache"]="/data/.cache"
 MOUNTS["${ROOT}/models"]="/data/models"
 
 MOUNTS["${ROOT}/embeddings"]="/data/embeddings"
-MOUNTS["${ROOT}/config.json"]="/data/config/auto/config.json"
-MOUNTS["${ROOT}/ui-config.json"]="/data/config/auto/ui-config.json"
-MOUNTS["${ROOT}/styles.csv"]="/data/config/auto/styles.csv"
-MOUNTS["${ROOT}/extensions"]="/data/config/auto/extensions"
-MOUNTS["${ROOT}/config_states"]="/data/config/auto/config_states"
+MOUNTS["${ROOT}/config.json"]="/data/config/reforge/config.json"
+MOUNTS["${ROOT}/ui-config.json"]="/data/config/reforge/ui-config.json"
+MOUNTS["${ROOT}/styles.csv"]="/data/config/reforge/styles.csv"
+MOUNTS["${ROOT}/extensions"]="/data/config/reforge/extensions"
+MOUNTS["${ROOT}/config_states"]="/data/config/reforge/config_states"
 
 # extra hacks
 MOUNTS["${ROOT}/repositories/CodeFormer/weights/facelib"]="/data/.cache"
@@ -51,7 +50,6 @@ for to_path in "${!MOUNTS[@]}"; do
   rm -rf "${to_path}"
   if [ ! -f "$from_path" ]; then
     mkdir -vp "$from_path"
-#    mkdir -vp "$from_path" || true
   fi
   mkdir -vp "$(dirname "${to_path}")"
   ln -sT "${from_path}" "${to_path}"
@@ -60,11 +58,9 @@ done
 
 echo "Installing extension dependencies (if any)"
 
-chown -R $PUID:$PGID ~/.cache/
+# because we build our container as root:
+chown -R root ~/.cache/
 chmod 766 ~/.cache/
-
-chown -R $PUID:$PGID /output
-chmod 766 /output
 
 shopt -s nullglob
 # For install.py, please refer to https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Developing-extensions#installpy
@@ -79,10 +75,10 @@ for installscript in "${list[@]}"; do
   PYTHONPATH=${ROOT} python "$installscript"
 done
 
-if [ -f "/data/config/auto/startup.sh" ]; then
+if [ -f "/data/config/reforge/startup.sh" ]; then
   pushd ${ROOT}
   echo "Running startup script"
-  . /data/config/auto/startup.sh
+  . /data/config/reforge/startup.sh
   popd
 fi
 
