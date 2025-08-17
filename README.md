@@ -37,7 +37,7 @@ This repository provides multiple UIs for you to play around with stable diffusi
 | -------------------------------------------------------------------------------- |
 | ![](https://github.com/comfyanonymous/ComfyUI/raw/master/comfyui_screenshot.png) |
 
-### [Fooocus](https://github.com/comfyanonymous/ComfyUI)
+### [Fooocus](https://github.com/lllyasviel/Fooocus)
 
 [Full feature list here](https://github.com/lllyasviel/Fooocus#fooocus), Screenshot:
 
