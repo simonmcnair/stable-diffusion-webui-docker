@@ -31,8 +31,8 @@ rsync --info=NAME ${ROOT}/models/karlo/ /data/models/karlo/
 
 declare -A MOUNTS
 
-#MOUNTS["/root/.cache"]="/data/.cache"
-MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
+MOUNTS["/root/.cache"]="/data/.cache"
+#MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
 MOUNTS["${ROOT}/models"]="/data/models"
 
 MOUNTS["${ROOT}/embeddings"]="/data/embeddings"
@@ -60,11 +60,11 @@ done
 
 echo "Installing extension dependencies (if any)"
 
-chown -R $PUID:$PGID ~/.cache/
-chmod 766 ~/.cache/
-
-chown -R $PUID:$PGID /output
-chmod 766 /output
+#chown -R $PUID:$PGID ~/.cache/
+#chmod 766 ~/.cache/
+#
+#chown -R $PUID:$PGID /output
+#chmod 766 /output
 
 shopt -s nullglob
 # For install.py, please refer to https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Developing-extensions#installpy

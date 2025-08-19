@@ -1,5 +1,5 @@
 # Defines the versions of ComfyUI, ComfyUI Manager, and PyTorch to use
-ARG COMFYUI_VERSION=v0.3.44
+ARG COMFYUI_VERSION=v0.3.50
 ARG COMFYUI_MANAGER_VERSION=3.33.8
 ARG PYTORCH_VERSION=2.7.1-cuda12.8-cudnn9-runtime
 

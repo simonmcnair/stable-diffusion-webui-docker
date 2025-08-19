@@ -15,16 +15,19 @@ x-base_service: &base_service
                 device_ids: ['0']
                 capabilities: [compute, utility, gpu]
 
-x-auto_service: &auto_service
+x-defaults: &defaults
     <<: *base_service
-    container_name: auto
-    build: ./services/AUTOMATIC1111
-    image: sd-auto:78
     ports:
       - "${WEBUI_PORT:-7860}:7860"
     volumes:
       - &v1 ./data:/data
       - &v2 ./output:/output
+
+x-auto_service: &auto_service
+    <<: *defaults
+    container_name: auto
+    build: ./services/AUTOMATIC1111
+    image: sd-auto:78
 
 name: webui-docker
 
@@ -45,8 +48,6 @@ services:
     <<: *auto_service
     profiles: ["auto-cpu"]
     deploy: {}
-    ports:
-      - "${WEBUI_PORT:-7860}:7860"
     environment:
       - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
 
@@ -57,8 +58,9 @@ services:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --no-half-vae --api
 
   auto-rocm:
-    <<: *base_service
+    <<: *auto_service
     profiles: ["auto-rocm"]
+    container_name: auto-rocm
     build:
       context: ./services/AUTOMATIC1111
       dockerfile: ROCM.dockerfile
@@ -77,9 +79,9 @@ services:
     image: sd-comfy:7
     volumes:
       - ./data/models:/opt/comfyui/models
+      - ./data/models/configs:/opt/comfyui/user/default/
       - ./data/config/comfy/custom_nodes:/opt/comfyui/custom_nodes
       - ./output/comfy:/opt/comfyui/output
-      - ./data/models/configs:/opt/comfyui/user/default/
     ports:
       - "${COMFYUI_PORT:-7861}:7861"
     environment:
@@ -107,10 +109,15 @@ services:
       - "${SWARMUI_PORT:-7801}:7801"
     volumes:
       - ./data/swarmui:/SwarmUI/Data
-#      - "backend:/app/dlbackend"
       - ./data/models:/SwarmUI/Models
       - ./data/embeddings:/SwarmUI/Models/Embeddings
+# comfyui
+      - ./data/config/comfy/custom_nodes:/SwarmUI/dlbackend/ComfyUI/custom_nodes*
+# TODO fix permissions
+      - ./data/models/configs:/SwarmUI/dlbackend/ComfyUI/user/default/
+# output
       - ./output/swarmui:/SwarmUI/Output
+      - ./output/swarmui/comfy:/SwarmUI/dlbackend/ComfyUI/output
 
   reforge: &reforge
     <<: *base_service
