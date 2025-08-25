@@ -112,7 +112,7 @@ services:
       - ./data/models:/SwarmUI/Models
       - ./data/embeddings:/SwarmUI/Models/Embeddings
 # comfyui
-      - ./data/config/comfy/custom_nodes:/SwarmUI/dlbackend/ComfyUI/custom_nodes*
+      - ./data/config/comfy/custom_nodes:/SwarmUI/dlbackend/ComfyUI/custom_nodes
 # TODO fix permissions
       - ./data/models/configs:/SwarmUI/dlbackend/ComfyUI/user/default/
 # output

@@ -1,5 +1,5 @@
 # Defines the versions of ComfyUI, ComfyUI Manager, and PyTorch to use
-ARG COMFYUI_VERSION=v0.3.50
+ARG COMFYUI_VERSION=v0.3.52
 ARG COMFYUI_MANAGER_VERSION=3.33.8
 ARG PYTORCH_VERSION=2.7.1-cuda12.8-cudnn9-runtime
 
@@ -50,12 +50,17 @@ RUN pip3 install --no-cache-dir \
     sageattention \
     psutil
 
+# Pre-install previously used custom nodes requirements from volume
+COPY ./install/merged-requirements.txt* /docker/requirements.txt
+RUN sh -c '[ -f /docker/requirements.txt ] && pip install --no-cache-dir -r /docker/requirements.txt  \
+    || echo "merged-requirements.txt not found, skipping pre-install."'
+
 # Sets the working directory to the ComfyUI directory
 WORKDIR /opt/comfyui
 COPY . /docker/
 RUN chmod u+x /docker/entrypoint.sh && cp /docker/extra_model_paths.yaml /opt/comfyui
 
-ENV NVIDIA_VISIBLE_DEVICES=all PYTHONPATH="${PYTHONPATH}:${PWD}" CLI_ARGS=""
+ENV NVIDIA_VISIBLE_DEVICES=all PYTHONPATH="\${PYTHONPATH}:\${PWD}" CLI_ARGS=""
 EXPOSE 7861
 
 # Adds the startup script to the container; the startup script will create all necessary directories in the models and custom nodes volumes that were
