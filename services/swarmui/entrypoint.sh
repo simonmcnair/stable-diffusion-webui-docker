@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#set -x
+set -x
 # Ensure correct local path.
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR"
@@ -11,8 +11,6 @@ export PATH="$SCRIPT_DIR/.dotnet:~/.dotnet:$PATH"
 export ASPNETCORE_ENVIRONMENT="Production"
 export ASPNETCORE_URLS="http://*:7801"
 
-# TODO fix permissions
-#chown -R swarmui:swarmui ${COMFYUI_PATH}/user/default/
 chmod -R 755 ${COMFYUI_PATH}/user/default/
 chmod -R 755 /opt/comfyui/user/default/
 

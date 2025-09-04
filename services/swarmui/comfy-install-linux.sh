@@ -93,4 +93,12 @@ $python -s -m pip install --no-cache-dir \
     --requirement ${COMFYUI_PATH}/requirements.txt \
     --requirement ${CUSTOM_NODES_PATH}/ComfyUI-Manager/requirements.txt
 
+# Pre-install previously used custom nodes requirements from volume
+if [ -f "/docker/requirements.txt" ]; then
+  echo "pre-install custom nodes requirements..."
+  $python -s -m pip install --no-cache-dir -r /docker/requirements.txt
+elif [ "$GPU_TYPE" == "amd" ]; then
+  echo "merged-requirements.txt not found, skipping pre-install."
+fi
+
 echo "Installation completed for $GPU_TYPE GPU."

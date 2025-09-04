@@ -1,6 +1,6 @@
 # Defines the versions of ComfyUI, ComfyUI Manager, and PyTorch to use
-ARG COMFYUI_VERSION=v0.3.52
-ARG COMFYUI_MANAGER_VERSION=3.33.8
+ARG COMFYUI_VERSION=v0.3.57
+ARG COMFYUI_MANAGER_VERSION=3.35
 ARG PYTORCH_VERSION=2.7.1-cuda12.8-cudnn9-runtime
 
 # This image is based on the latest official PyTorch image, because it already contains CUDA, CuDNN, and PyTorch

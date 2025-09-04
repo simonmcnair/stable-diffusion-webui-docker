@@ -113,11 +113,14 @@ services:
       - ./data/embeddings:/SwarmUI/Models/Embeddings
 # comfyui
       - ./data/config/comfy/custom_nodes:/SwarmUI/dlbackend/ComfyUI/custom_nodes
-# TODO fix permissions
-      - ./data/models/configs:/SwarmUI/dlbackend/ComfyUI/user/default/
+#      - ./data/models/configs:/SwarmUI/dlbackend/ComfyUI/user/default/ # TODO rm old
+      - ./data/config/configs:/SwarmUI/dlbackend/ComfyUI/user/default/
 # output
       - ./output/swarmui:/SwarmUI/Output
       - ./output/swarmui/comfy:/SwarmUI/dlbackend/ComfyUI/output
+    environment:
+      - COMFYUI_PATH=/opt/comfyui
+      - COMFYUI_MODEL_PATH=/opt/comfyui/models
 
   reforge: &reforge
     <<: *base_service

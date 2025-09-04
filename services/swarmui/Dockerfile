@@ -1,10 +1,11 @@
 ARG SWARMUI_VERSION=0.9.6-Beta
-ARG COMFYUI_VERSION=v0.3.50
-ARG COMFYUI_MANAGER_VERSION=3.33.8
+ARG COMFYUI_VERSION=v0.3.57
+ARG COMFYUI_MANAGER_VERSION=3.35
 ARG DOTNET_VERSION=8.0-bookworm-slim
 ARG SWARM_PATH="/SwarmUI"
 #ENV SWARM_PATH=/opt/swarmui
 
+# BUILD
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 ARG SWARM_PATH
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -58,6 +59,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
         libglib2.0-0 \
         libgl1
 
+# Install ComfyUI
 RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /opt/comfyui && \
     cd /opt/comfyui && \
     git fetch origin ${COMFYUI_VERSION} && \
@@ -69,19 +71,21 @@ RUN git clone --depth=1 https://github.com/Comfy-Org/ComfyUI-Manager.git /opt/co
     git checkout FETCH_HEAD
 
 WORKDIR ${SWARM_PATH}
+RUN chown -R swarmui:swarmui /opt/comfyui
+RUN git config --global --add safe.directory /opt/comfyui
+
 ENV COMFYUI_PATH="/SwarmUI/dlbackend/ComfyUI"
 ENV CUSTOM_NODES_PATH="/SwarmUI/dlbackend/ComfyUI/custom_nodes"
 
+# Pre-install previously used custom nodes requirements from volume
+COPY ./install/merged-requirements.txt* /docker/requirements.txt
 COPY comfy-install-linux.sh ${SWARM_PATH}/launchtools/
 RUN chmod +x ${SWARM_PATH}/launchtools/comfy-install-linux.sh && \
     ${SWARM_PATH}/launchtools/comfy-install-linux.sh ${GPU_TYPE}
 
-RUN chown -R swarmui:swarmui ${COMFYUI_PATH}/venv
-RUN chown -R swarmui:swarmui ${COMFYUI_PATH}
-RUN git config --global --add safe.directory ${COMFYUI_PATH}
-
+RUN chown -R swarmui:swarmui ${COMFYUI_PATH}/venv # Reapplied again bc of permissions issues, maybe related to a symlink/docker/windows bug
 ENV PATH="${COMFYUI_PATH}/venv/bin:$PATH"
-ENV PYTHONPATH="${CUSTOM_NODES_PATH}:${PYTHONPATH}"
+ENV PYTHONPATH="${CUSTOM_NODES_PATH}:\${PYTHONPATH}"
 USER swarmui
 EXPOSE 7801
 
