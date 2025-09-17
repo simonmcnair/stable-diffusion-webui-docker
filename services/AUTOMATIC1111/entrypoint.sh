@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -x
 set -Eeuo pipefail
 
 # TODO: move all mkdir -p ?
@@ -31,8 +31,8 @@ rsync --info=NAME ${ROOT}/models/karlo/ /data/models/karlo/
 
 declare -A MOUNTS
 
-#MOUNTS["/root/.cache"]="/data/.cache"
-MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
+MOUNTS["/root/.cache"]="/data/.cache"
+#MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
 MOUNTS["${ROOT}/models"]="/data/models"
 
 MOUNTS["${ROOT}/embeddings"]="/data/embeddings"
@@ -51,6 +51,7 @@ for to_path in "${!MOUNTS[@]}"; do
   rm -rf "${to_path}"
   if [ ! -f "$from_path" ]; then
     mkdir -vp "$from_path"
+#    mkdir -vp "$from_path" || true
   fi
   mkdir -vp "$(dirname "${to_path}")"
   ln -sT "${from_path}" "${to_path}"
@@ -59,11 +60,11 @@ done
 
 echo "Installing extension dependencies (if any)"
 
-chown -R $PUID:$PGID ~/.cache/
-chmod 766 ~/.cache/
-
-chown -R $PUID:$PGID /output
-chmod 766 /output
+#chown -R $PUID:$PGID ~/.cache/
+#chmod 766 ~/.cache/
+#
+#chown -R $PUID:$PGID /output
+#chmod 766 /output
 
 shopt -s nullglob
 # For install.py, please refer to https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Developing-extensions#installpy

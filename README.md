@@ -8,6 +8,10 @@ supports:
 - fooocus
 - forge
 - reforge
+- swarmui _**(be aware comfyui backend can take some time to start, up to a minute or 2)**_
+
+#### TODOs
+1. [ ] Fix [Warning] [ComfyUI-0/STDERR] NameError: name 'NODE_CLASS_MAPPINGS' is not defined
 
 # Stable Diffusion WebUI Docker
 
