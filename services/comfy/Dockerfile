@@ -1,4 +1,7 @@
-FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
+#too new for my GPU
+#FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
+
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
