@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+FROM 2.7.1-cuda12.8-cudnn9-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
@@ -45,10 +45,10 @@ USER $PUID:$PGID
 
 ENV ROOT=/stable-diffusion
 RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
-  git clone -b v0.3.10 --depth=1 https://github.com/comfyanonymous/ComfyUI.git ${ROOT} && \
+  git clone -b v0.3.57 --depth=1 https://github.com/comfyanonymous/ComfyUI.git ${ROOT} && \
   pip install -r ${ROOT}/requirements.txt
 
-RUN git clone -b 3.6.5 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${ROOT}/custom_nodes/comfyui-manager && \
+RUN git clone -b 3.35 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${ROOT}/custom_nodes/comfyui-manager && \
   pip install -r ${ROOT}/custom_nodes/comfyui-manager/requirements.txt
 
 RUN chown -R "$PUID:$PGID" "${ROOT}"
