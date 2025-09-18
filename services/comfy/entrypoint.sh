@@ -3,12 +3,18 @@
 set -Eeuo pipefail
 
 mkdir -vp /data/config/comfy/custom_nodes
+mkdir -vp /data/config/comfy/user/default/workflows
 
 declare -A MOUNTS
 
+MOUNTS["${ROOT}/models"]="/data/models"
 MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
+
 MOUNTS["${ROOT}/input"]="/data/config/comfy/input"
 MOUNTS["${ROOT}/output"]="/output/comfy"
+
+MOUNTS["${ROOT}/custom_nodes"]="/data/config/comfy/custom_nodes"
+MOUNTS["${ROOT}/user"]="/data/config/comfy/user"
 
 for to_path in "${!MOUNTS[@]}"; do
   set -Eeuo pipefail
