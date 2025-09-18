@@ -3,7 +3,8 @@ a111:
 #  base_path: /data
 
   checkpoints: models/Stable-diffusion
-  configs: models/configs
+  configs: user/default
+#  configs: models/configs
   vae: models/VAE
   loras: |
     models/Lora

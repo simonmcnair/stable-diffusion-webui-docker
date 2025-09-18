@@ -1,9 +1,11 @@
 ARG SWARMUI_VERSION=0.9.6-Beta
-ARG COMFYUI_VERSION=v0.3.57
+ARG COMFYUI_VERSION=v0.3.59
 ARG COMFYUI_MANAGER_VERSION=3.35
-ARG DOTNET_VERSION=8.0-bookworm-slim
+ARG DOTNET_VERSION=9.0-bookworm-slim
+#ARG DOTNET_VERSION=8.0-bookworm-slim
+ARG ASPNET_VERSION=9.0-bookworm-slim
+#ARG ASPNET_VERSION=8.0-bookworm-slim
 ARG SWARM_PATH="/SwarmUI"
-#ENV SWARM_PATH=/opt/swarmui
 
 # BUILD
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
@@ -25,7 +27,7 @@ RUN git clone --depth=1 https://github.com/mcmonkeyprojects/SwarmUI.git ${SWARM_
 RUN dotnet build src/SwarmUI.csproj --configuration Release -o ./bin
 
 # RUN
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
+FROM mcr.microsoft.com/dotnet/aspnet:${ASPNET_VERSION}
 ARG SWARM_PATH
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 
