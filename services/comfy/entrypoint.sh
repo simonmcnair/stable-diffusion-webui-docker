@@ -17,15 +17,26 @@ MOUNTS["${ROOT}/custom_nodes"]="/data/config/comfy/custom_nodes"
 MOUNTS["${ROOT}/user"]="/data/config/comfy/user"
 
 for to_path in "${!MOUNTS[@]}"; do
-  set -Eeuo pipefail
-  from_path="${MOUNTS[${to_path}]}"
-  rm -rf "${to_path}"
-  if [ ! -f "$from_path" ]; then
+
+  from_path="${MOUNTS[$to_path]}"
+
+  # Make sure the source exists
+  if [ ! -e "$from_path" ]; then
     mkdir -vp "$from_path"
   fi
-  mkdir -vp "$(dirname "${to_path}")"
-  ln -sT "${from_path}" "${to_path}"
-  echo Mounted $(basename "${from_path}")
+
+  # If destination already exists and is not a symlink
+  if [ -e "$to_path" ] && [ ! -L "$to_path" ]; then
+    echo "Moving contents from $to_path -> $from_path"
+    mv -v "$to_path"/* "$from_path"/ 2>/dev/null || true
+    rm -rf "$to_path"
+  fi
+
+  mkdir -vp "$(dirname "$to_path")"
+  ln -sT "$from_path" "$to_path"
+
+  echo "Mounted $(basename "$from_path")"
+
 done
 
 if [ -f "/data/config/comfy/startup.sh" ]; then
