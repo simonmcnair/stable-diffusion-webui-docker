@@ -16,9 +16,9 @@ a111:
   clip: models/CLIPEncoder
   embeddings: embeddings
 
-  custom_nodes:
-    - config/comfy/custom_nodes
-    - /stable-diffusion/built_in/comfyui-manager
+  custom_nodes: |
+    config/comfy/custom_nodes
+    /stable-diffusion/built_in/comfyui-manager
 
   # TODO: I am unsure about these, need more testing
   # style_models: config/comfy/style_models
