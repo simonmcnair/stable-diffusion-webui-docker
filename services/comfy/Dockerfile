@@ -51,8 +51,8 @@ RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
   git clone -b v0.3.57 --depth=1 https://github.com/comfyanonymous/ComfyUI.git ${ROOT} && \
   pip install -r ${ROOT}/requirements.txt
 
-RUN git clone -b 3.35 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${ROOT}/custom_nodes/comfyui-manager && \
-  pip install -r ${ROOT}/custom_nodes/comfyui-manager/requirements.txt
+RUN git clone -b 3.35 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${ROOT}/built_in/comfyui-manager && \
+  pip install -r ${ROOT}/built_in/comfyui-manager/requirements.txt
 
 RUN chown -R "$PUID:$PGID" "${ROOT}"
 
