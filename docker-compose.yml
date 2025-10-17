@@ -20,17 +20,29 @@ services:
     profiles: ["download"]
     volumes:
       - *v1
+
   auto: &automatic
     <<: *base_service
     profiles: ["auto"]
-    image: simonmcnair/automatic1111:master
+    build: ./services/AUTOMATIC1111
+    image: sd-auto:80
+    environment:
+      - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
+
+  auto_GTX: &automatic
+    <<: *base_service
+    profiles: ["auto"]
+    build: ./services/AUTOMATIC1111
+    image: sd-auto-gtx:1
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
   auto-rocm:
     <<: *base_service
     profiles: ["auto-rocm"]
-    image: simonmcnair/automatic1111-rocm:master
+    build: 
+      context: ./services/AUTOMATIC1111
+      dockerfile: Dockerfile.rocm
     devices:
       - "/dev/kfd"
       - "/dev/dri"
@@ -41,14 +53,16 @@ services:
   reforge: &reforge
     <<: *base_service
     profiles: ["reforge"]
-    image: simonmcnair/reforge:master
+    build: ./services/reforge
+    image: sd-reforge:80
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
   forge: &forge
     <<: *base_service
     profiles: ["forge"]
-    image: simonmcnair/forge:master
+    build: ./services/forge
+    image: sd-forge:80
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
@@ -62,7 +76,8 @@ services:
   comfy: &comfy
     <<: *base_service
     profiles: ["comfy"]
-    image: simonmcnair/comfy:master
+    build: ./services/comfy/
+    image: sd-comfy:6
     environment:
       - CLI_ARGS=
 
@@ -74,6 +89,67 @@ services:
       - CLI_ARGS=--cpu
 
   fooocus: &fooocus
+    <<: *base_service
+    profiles: ["fooocus"]
+    build: ./services/fooocus/
+    image: sd-fooocus:3
+    environment:
+      - CLI_ARGS=
+
+  auto_from_image: &automatic
+    <<: *base_service
+    profiles: ["auto"]
+    image: simonmcnair/automatic1111:master
+    environment:
+      - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
+
+  auto-rocm_from_image:
+    <<: *base_service
+    profiles: ["auto-rocm"]
+    image: simonmcnair/automatic1111-rocm:master
+    devices:
+      - "/dev/kfd"
+      - "/dev/dri"
+    deploy: {}
+    environment:
+      - CLI_ARGS=--allow-code --medvram --enable-insecure-extension-access --api
+      
+  reforge_from_image: &reforge
+    <<: *base_service
+    profiles: ["reforge"]
+    image: simonmcnair/reforge:master
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
+  forge_from_image: &forge
+    <<: *base_service
+    profiles: ["forge"]
+    image: simonmcnair/forge:master
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
+  auto-cpu_from_image:
+    <<: *automatic
+    profiles: ["auto-cpu"]
+    deploy: {}
+    environment:
+      - CLI_ARGS=--no-half --precision full --allow-code --enable-insecure-extension-access --api
+
+  comfy_from_image: &comfy
+    <<: *base_service
+    profiles: ["comfy"]
+    image: simonmcnair/comfy:master
+    environment:
+      - CLI_ARGS=
+
+  comfy-cpu_from_image:
+    <<: *comfy
+    profiles: ["comfy-cpu"]
+    deploy: {}
+    environment:
+      - CLI_ARGS=--cpu
+
+  fooocus_from_image: &fooocus
     <<: *base_service
     profiles: ["fooocus"]
     image: simonmcnair/fooocus:master
