@@ -68,6 +68,16 @@ services:
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
+  forge_gtx: &forge_gtx
+    <<: *base_service
+    profiles: ["forge_gtx"]
+    build:
+      context: ./services/forge
+      dockerfile: Dockerfile_gtx
+    image: sd-forge_gtx:2
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
   auto-cpu:
     <<: *automatic
     profiles: ["auto-cpu"]
@@ -100,14 +110,21 @@ services:
 
   auto_from_image: &automatic_from_image
     <<: *base_service
-    profiles: ["auto"]
+    profiles: ["auto_from_image"]
     image: simonmcnair/automatic1111:master
+    environment:
+      - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
+
+  auto_gtx_from_image: &automatic_gtx_from_image
+    <<: *base_service
+    profiles: ["auto_gtx_from_image"]
+    image: simonmcnair/automatic1111_gtx:master
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
   auto-rocm_from_image: &auto-rocm_from_image
     <<: *base_service
-    profiles: ["auto-rocm"]
+    profiles: ["auto-rocm_from_image"]
     image: simonmcnair/automatic1111-rocm:master
     devices:
       - "/dev/kfd"
@@ -115,7 +132,7 @@ services:
     deploy: {}
     environment:
       - CLI_ARGS=--allow-code --medvram --enable-insecure-extension-access --api
-      
+
   reforge_from_image: &reforge_from_image
     <<: *base_service
     profiles: ["reforge_from_image"]
