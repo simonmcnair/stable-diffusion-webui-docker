@@ -16,7 +16,8 @@ RUN . /clone.sh stable-diffusion-webui-assets https://github.com/AUTOMATIC1111/s
 RUN . /clone.sh huggingface_guess https://github.com/lllyasviel/huggingface_guess.git 70942022b6bcd17d941c1b4172804175758618e2
 
 
-FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
+#FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
@@ -101,10 +102,10 @@ RUN --mount=type=cache,target=/root/.cache/codeformer pip install -r ${ROOT}/rep
 #  cp -r /tmp/huggingface_guess/huggingface_guess ${ROOT}/huggingface_guess
 
 # Ensure torchvision is correctly installed
-RUN --mount=type=cache,target=/root/.cache/torch pip install torchvision==0.18.1
+#RUN --mount=type=cache,target=/root/.cache/torch pip install torchvision==0.18.1
 
 RUN --mount=type=cache,target=/root/.cache/repos \
-  pip install pyngrok xformers==0.0.27 pytorch_lightning torchdiffeq torchsde \
+  pip install pyngrok pytorch_lightning torchdiffeq torchsde \
   git+https://github.com/TencentARC/GFPGAN.git@8d2447a2d918f8eba5a4a01463fd48e45126a379 \
   git+https://github.com/openai/CLIP.git@d50d76daa670286dd6cacf3bcd80b5e4823fc8e1 \
   git+https://github.com/mlfoundations/open_clip.git@v2.20.0 
