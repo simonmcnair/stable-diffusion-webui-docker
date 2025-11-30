@@ -77,6 +77,8 @@ services:
     container_name: comfy
     build: ./services/comfy
     image: sd-comfy:latest
+#    command:
+#      - python main.py --preview-method auto --force-fp16
     volumes:
       - ./data/models:/opt/comfyui/models
       - ./data/config/configs:/opt/comfyui/user/default/
@@ -145,3 +147,29 @@ services:
     image: sd-fooocus:latest
     environment:
       - CLI_ARGS=
+
+  ai-toolkit:
+    <<: *base_service
+    profiles: [ "ai-toolkit" ]
+    container_name: ai-toolkit
+    build: ./services/ai-toolkit
+    image: sd-aitoolkit:latest
+    ports:
+      - "8675:8675"
+    volumes:
+      - ./data/.cache/huggingface/hub:/root/.cache/huggingface/hub
+#      - ./data/aitk_db.db:/app/ai-toolkit/aitk_db.db
+      - ./data/datasets:/app/ai-toolkit/datasets
+      - ./data/config/ai-toolkit:/app/ai-toolkit/config
+      - ./data/models:/app/ai-toolkit/models
+      - ./output/ai-toolkit:/app/ai-toolkit/output
+    environment:
+      - AI_TOOLKIT_AUTH=${AI_TOOLKIT_AUTH:-password}
+      - NODE_ENV=production
+      - TZ=UTC
+    secrets:
+      - my_secret
+
+secrets:
+   my_secret:
+     file: ./services/ai-toolkit/secret.env
