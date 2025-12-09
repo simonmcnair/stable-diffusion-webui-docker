@@ -82,6 +82,7 @@ services:
     volumes:
       - ./data/models:/opt/comfyui/models
       - ./data/config/configs:/opt/comfyui/user/default/
+      - ./data/config/comfyui_manager/:/opt/comfyui/user/__manager/
       - ./data/config/comfy/custom_nodes:/opt/comfyui/custom_nodes
       - ./output/comfy:/opt/comfyui/output
     ports:

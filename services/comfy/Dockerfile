@@ -1,12 +1,187 @@
+###############################################################################
+# Stage 0 — CUDA-enabled development base
+# This replaces NVIDIA's cuda:<version>-devel images for dev builds.
+###############################################################################
+FROM ubuntu:22.04 AS cuda-dev-base
+
+# Non-interactive apt + NVIDIA environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVARCH=x86_64
+ENV CUDA_VERSION=12.4.1
+ENV PYTORCH_VERSION=2.6.0
+
+# Core development tools
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+        build-essential \
+        gnupg2 \
+        curl \
+        ca-certificates \
+        wget \
+        software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add NVIDIA CUDA repo key
+RUN curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/${NVARCH}/cuda-keyring_1.1-1_all.deb \
+     -o cuda-keyring.deb \
+ && dpkg -i cuda-keyring.deb \
+ && rm cuda-keyring.deb
+
+# NVIDIA repo pinning (recommended)
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/${NVARCH}/cuda-ubuntu2204.pin \
+    && mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
+
+# CUDA 12.4 toolkit + libraries
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+        cuda-cudart-12-4 \
+        cuda-compiler-12-4 \
+        cuda-libraries-12-4 \
+        cuda-libraries-dev-12-4 \
+        cuda-compat-12-4 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Other dev helpers
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+        cmake \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+# CUDA environment setup
+ENV CUDA_HOME="/usr/local/cuda"
+ENV PATH="${CUDA_HOME}/bin:${PATH}"
+#ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+
+###############################################################################
+# Stage 1 — dev-base (now built on top of your cuda-dev-base)
+# Adds PyTorch build prerequisites, ccache, image libs, etc.
+###############################################################################
+FROM cuda-dev-base AS dev-base
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ccache \
+        libjpeg-dev \
+        libpng-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN /usr/sbin/update-ccache-symlinks
+RUN mkdir /opt/ccache && ccache --set-config=cache_dir=/opt/ccache
+
+ENV PATH=/opt/conda/bin:$PATH
+
+###############################################################################
+# Stage 2 — Conda install (unchanged)
+###############################################################################
+FROM dev-base AS conda
+ARG PYTHON_VERSION=3.11
+ARG TARGETPLATFORM
+
+RUN case ${TARGETPLATFORM} in \
+         "linux/arm64") MINICONDA_ARCH=aarch64 ;; \
+         *)             MINICONDA_ARCH=x86_64 ;; \
+    esac \
+    && curl -fsSL -o ~/miniconda.sh \
+       "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINICONDA_ARCH}.sh"
+
+COPY requirements.txt requirements-build.txt ./
+
+RUN chmod +x ~/miniconda.sh \
+    && bash ~/miniconda.sh -b -p /opt/conda \
+    && rm ~/miniconda.sh \
+    && /opt/conda/bin/conda install -y \
+         python=${PYTHON_VERSION} \
+         cmake conda-build pyyaml numpy ipython \
+    && /opt/conda/bin/python -m pip install -r requirements.txt \
+    && /opt/conda/bin/conda clean -ya
+
+###############################################################################
+# Stage 3 — Fetch submodules
+###############################################################################
+FROM dev-base AS submodule-update
+ARG PYTORCH_VERSION
+RUN git clone https://github.com/pytorch/pytorch.git /opt/pytorch && \
+    cd /opt/pytorch && \
+    git fetch origin v${PYTORCH_VERSION} && \
+    git checkout FETCH_HEAD
+WORKDIR /opt/pytorch
+RUN git submodule update --init --recursive
+
+###############################################################################
+# Stage 4 — Install PyTorch from wheels into Conda
+###############################################################################
+FROM conda AS conda-installs
+ARG CONDA_VERSION=25.7.0
+ARG CUDA_PATH=cu124
+ARG INSTALL_CHANNEL=whl
+ARG CUDA_VERSION
+ARG TARGETPLATFORM
+
+RUN /opt/conda/bin/conda install -y python=${PYTHON_VERSION} conda=${CONDA_VERSION}
+
+RUN case ${TARGETPLATFORM} in \
+         "linux/arm64") \
+             pip install --extra-index-url https://download.pytorch.org/whl/cpu/ \
+                 "torch==${PYTORCH_VERSION}" torchvision torchaudio ;; \
+         *) \
+             pip install --index-url https://download.pytorch.org/${INSTALL_CHANNEL}/${CUDA_PATH#.}/ \
+                 "torch==${PYTORCH_VERSION}" torchvision torchaudio ;; \
+    esac \
+    && /opt/conda/bin/conda clean -ya
+
+RUN /opt/conda/bin/pip install torchelastic
+
+RUN IS_CUDA=$(python -c "import torch; print(torch.cuda._is_compiled())"); \
+    echo "CUDA Enabled: $IS_CUDA"; \
+    if [ "$IS_CUDA" != "True" ] && [ -n "${CUDA_VERSION}" ]; then exit 1; fi
+
+###############################################################################
+# Stage 5 — Official Runtime image (remains Ubuntu-only)
+###############################################################################
+FROM conda-installs AS official
+ARG PYTORCH_VERSION
+ARG TRITON_VERSION
+ARG TARGETPLATFORM
+ARG CUDA_VERSION
+
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates libjpeg-dev libpng-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN if [ -n "${TRITON_VERSION}" ] && [ "${TARGETPLATFORM}" != "linux/arm64" ]; then \
+        apt-get update && apt-get install -y gcc; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+
+ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+ENV PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
+ENV PYTORCH_VERSION=${PYTORCH_VERSION}
+
+WORKDIR /workspace
+
+###############################################################################
+# Stage 6 — Dev image (inherits CUDA 12.4 from your base)
+###############################################################################
+FROM official AS dev
+
+COPY --from=conda /opt/conda /opt/conda
+COPY --from=submodule-update /opt/pytorch /opt/pytorch
+
+###############################################################################
+# Stage 7 — ComfyUI image
+###############################################################################
+
+FROM dev
+# This image is based on the latest official PyTorch image, because it already contains CUDA, CuDNN, and PyTorch
+#ARG PYTORCH_VERSION=2.9.1-cuda13.0-cudnn9-devel
+#FROM pytorch/pytorch:${PYTORCH_VERSION}
+
 # Defines the versions of ComfyUI, ComfyUI Manager, and PyTorch to use
-ARG COMFYUI_VERSION=v0.3.71
+ARG COMFYUI_VERSION=v0.3.76
 #ARG COMFYUI_MANAGER_VERSION=3.35
-ARG PYTORCH_VERSION=2.9.1-cuda13.0-cudnn9-devel
 # number of CPU's use for compilation
 ARG CPUS=10
-
-# This image is based on the latest official PyTorch image, because it already contains CUDA, CuDNN, and PyTorch
-FROM pytorch/pytorch:${PYTORCH_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
@@ -81,16 +256,39 @@ RUN pip install \
     --requirement /opt/comfyui/requirements.txt \
     --requirement /opt/comfyui-manager/requirements.txt
 
-RUN pip3 install --no-cache-dir \
+RUN pip install --no-cache-dir \
     opencv-python \
+    opencv-contrib-python \
     diffusers \
     triton \
     torchsde \
     nvidia-ml-py \
     sageattention \
-    flash-attention \
+    packaging \
+    ninja  \
+    compel  \
     psutil \
     nvitop
+
+ENV TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0"
+
+# PyTorch include/lib for ABI correctness
+ENV CFLAGS="-I/opt/conda/lib/python3.11/site-packages/torch/include \
+            -I/opt/conda/lib/python3.11/site-packages/torch/include/torch/csrc/api/include \
+            -I/opt/conda/lib/python3.11/site-packages/torch/include/TH \
+            -I/opt/conda/lib/python3.11/site-packages/torch/include/THC"
+
+ENV CXXFLAGS="${CFLAGS}"
+ENV LDFLAGS="-L/opt/conda/lib/python3.11/site-packages/torch/lib"
+
+# NVCC compatibility flags for CUDA 12.4 + GCC 11 (Ubuntu 22.04)
+ENV NVCCFLAGS="--threads=4 -Xcompiler -Wno-float-conversion"
+
+ARG FLASH_ATTENTION_VERSION=2.5.9.post1
+ARG GPU_ARCHS=native
+ARG MAX_JOBS=4
+RUN GPU_ARCHS=${GPU_ARCHS} MAX_JOBS=${MAX_JOBS} pip install --no-cache-dir --no-build-isolation \
+    "flash-attn==${FLASH_ATTENTION_VERSION}" --verbose
 
 # compile ffmpeg
 RUN mkdir -p ~/ffmpeg_sources ~/bin && \
@@ -165,7 +363,7 @@ WORKDIR /opt/comfyui
 COPY . /docker/
 RUN chmod u+x /docker/entrypoint.sh && cp /docker/extra_model_paths.yaml /opt/comfyui
 
-ENV NVIDIA_VISIBLE_DEVICES=all PYTHONPATH="\${PYTHONPATH}:\${PWD}" CLI_ARGS=""
+ENV PYTHONPATH="\${PYTHONPATH}:\${PWD}" CLI_ARGS=""
 EXPOSE 7861
 
 # Adds the startup script to the container; the startup script will create all necessary directories in the models and custom nodes volumes that were
