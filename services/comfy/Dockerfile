@@ -54,6 +54,16 @@ RUN --mount=type=cache,target="$USER_HOME"/.cache/pip \
 RUN git clone -b 3.35 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${ROOT}/comfyui-manager && \
   pip install -r ${ROOT}/comfyui-manager/requirements.txt
 
+# Fix for ltdrdata/ComfyUI-Impact-Pack
+RUN pip uninstall -y opencv-python && pip install opencv-python-headless scikit-image piexif segment-anything
+
+# Fix for ltdrdata/ComfyUI-Inspire-Pack
+RUN pip install webcolors
+
+# Fix for "[Impact Pack] The SAM2 functionality is unavailable"
+# Uncomment the following line to enable SAM2. Warning: This increases build time significantly.
+# RUN pip install git+https://github.com/facebookresearch/sam2
+
 RUN chown -R "$PUID:$PGID" "${ROOT}"
 
 WORKDIR ${ROOT}
