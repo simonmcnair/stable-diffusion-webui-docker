@@ -43,13 +43,4 @@ fi
 chown -R $PUID:$PGID ~/.cache/
 chmod 776 ~/.cache/
 
-# Fix for "libGL.so.1" error: Ensure only headless OpenCV is installed
-# Some custom nodes (like Inspire Pack) install 'opencv-python' via Manager,
-# which breaks the headless container. We forcibly remove it on boot.
-if pip list | grep -F "opencv-python " > /dev/null; then
-    echo "Removing unsupported opencv-python..."
-    pip uninstall -y opencv-python || true
-fi
-pip install opencv-python-headless
-
 exec "$@"

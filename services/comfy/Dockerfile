@@ -7,6 +7,9 @@ ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
 RUN apt-get update && apt-get install -y git libgoogle-perftools-dev && apt-get clean
 
+# Install system dependencies required for standard opencv-python (needed by ComfyUI-Inspire-Pack and others)
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0 && apt-get clean
+
 ARG PUID=0
 ARG PGID=0
 ARG USER_HOME=/root
@@ -58,7 +61,7 @@ RUN git clone -b 3.35 --depth=1  https://github.com/ltdrdata/ComfyUI-Manager ${R
 RUN pip uninstall -y opencv-python && pip install opencv-python-headless scikit-image piexif segment-anything
 
 # Fix for ltdrdata/ComfyUI-Inspire-Pack
-RUN pip install webcolors
+RUN pip install webcolors opencv-python
 
 # Fix for "[Impact Pack] The SAM2 functionality is unavailable"
 # Uncomment the following line to enable SAM2. Warning: This increases build time significantly.
