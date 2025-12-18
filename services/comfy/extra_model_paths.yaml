@@ -10,6 +10,7 @@ a111:
     models/ESRGAN
     models/SwinIR
     models/GFPGAN
+    models/ScuNET
   hypernetworks: models/hypernetworks
   controlnet: models/ControlNet
   gligen: models/GLIGEN
