@@ -5,7 +5,8 @@ FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
-RUN apt-get update && apt-get install -y git libgoogle-perftools-dev && apt-get clean
+# libgl1 and libglib2.0-0 are required for opencv-python
+RUN apt-get update && apt-get install -y git libgoogle-perftools-dev libgl1 libglib2.0-0 && apt-get clean
 
 ARG PUID=0
 ARG PGID=0
