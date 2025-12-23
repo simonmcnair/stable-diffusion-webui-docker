@@ -178,7 +178,7 @@ FROM dev
 #FROM pytorch/pytorch:${PYTORCH_VERSION}
 
 # Defines the versions of ComfyUI, ComfyUI Manager, and PyTorch to use
-ARG COMFYUI_VERSION=v0.3.76
+ARG COMFYUI_VERSION=v0.5.1
 #ARG COMFYUI_MANAGER_VERSION=3.35
 # number of CPU's use for compilation
 ARG CPUS=10
@@ -284,38 +284,12 @@ ENV LDFLAGS="-L/opt/conda/lib/python3.11/site-packages/torch/lib"
 # NVCC compatibility flags for CUDA 12.4 + GCC 11 (Ubuntu 22.04)
 ENV NVCCFLAGS="--threads=4 -Xcompiler -Wno-float-conversion"
 
+# install flash-attention
 ARG FLASH_ATTENTION_VERSION=2.5.9.post1
 ARG GPU_ARCHS=native
 ARG MAX_JOBS=4
 RUN GPU_ARCHS=${GPU_ARCHS} MAX_JOBS=${MAX_JOBS} pip install --no-cache-dir --no-build-isolation \
     "flash-attn==${FLASH_ATTENTION_VERSION}" --verbose
-
-# compile ffmpeg
-RUN mkdir -p ~/ffmpeg_sources ~/bin && \
-  cd ~/ffmpeg_sources && \
-  wget -O ffmpeg-snapshot.tar.bz2 https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 && \
-  tar xjvf ffmpeg-snapshot.tar.bz2 && \
-  cd ffmpeg && \
-  PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
-    --prefix="$HOME/ffmpeg_build" \
-    --pkg-config-flags="--static" \
-    --extra-cflags="-I$HOME/ffmpeg_build/include" \
-    --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
-    --extra-libs="-lpthread -lm" \
-    --ld="g++" \
-    --bindir="$HOME/bin" \
-    --enable-gpl \
-    --enable-gnutls \
-    --enable-libass \
-    --enable-libfdk-aac \
-    --enable-libfreetype \
-    --enable-libmp3lame \
-    --enable-libx264 \
-    --enable-libx265 \
-    --enable-nonfree && \
-  PATH="$HOME/bin:$PATH" make -j $CPUS && \
-  make install && \
-  hash -r
 
 # install ffmpeg-nvidia adapter
 RUN mkdir ~/nv && cd ~/nv && \
