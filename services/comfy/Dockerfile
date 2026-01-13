@@ -178,7 +178,7 @@ FROM dev
 #FROM pytorch/pytorch:${PYTORCH_VERSION}
 
 # Defines the versions of ComfyUI, ComfyUI Manager, and PyTorch to use
-ARG COMFYUI_VERSION=v0.5.1
+ARG COMFYUI_VERSION=v0.8.2
 #ARG COMFYUI_MANAGER_VERSION=3.35
 # number of CPU's use for compilation
 ARG CPUS=10
@@ -300,6 +300,8 @@ RUN mkdir ~/nv && cd ~/nv && \
 RUN cd ~/nv && \
   git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/ && \
   cd ffmpeg && \
+  CFLAGS="-D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE -I/usr/local/cuda/include" \
+  LDFLAGS="-L/usr/local/cuda/lib64" \
   ./configure \
     --enable-nonfree \
     --enable-nvenc \

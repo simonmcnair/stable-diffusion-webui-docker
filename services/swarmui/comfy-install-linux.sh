@@ -82,11 +82,14 @@ fi
 
 echo "install general requirements..."
 $python -s -m pip install --no-cache-dir \
-    triton \
-    sageattention \
     opencv-python \
     diffusers \
-    psutil
+    triton \
+    torchsde \
+    nvidia-ml-py \
+    sageattention \
+    psutil \
+    nvitop
 
 # Installs the required Python packages for both ComfyUI and the ComfyUI Manager
 $python -s -m pip install --no-cache-dir \
