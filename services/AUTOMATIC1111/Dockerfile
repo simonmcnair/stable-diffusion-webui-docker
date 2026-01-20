@@ -124,3 +124,5 @@ ENV STABLE_DIFFUSION_REPO="https://github.com/w-e-w/stablediffusion.git"
 EXPOSE 7860
 ENTRYPOINT ["/docker/entrypoint.sh"]
 CMD python -u webui.py --listen --port 7860 ${CLI_ARGS}
+#ENTRYPOINT ["/bin/sh", "-c", "sleep infinity"]
+
