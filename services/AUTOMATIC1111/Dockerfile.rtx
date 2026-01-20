@@ -68,6 +68,8 @@ RUN if [ "$PUID" -ne "0" ]; then \
 WORKDIR /
 ENV ROOT=/stable-diffusion-webui
 
+RUN conda install -y libsqlite=3.48.0
+
 RUN --mount=type=cache,target=/root/.cache/sd \
   git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ${ROOT} && \
   cd stable-diffusion-webui && \
