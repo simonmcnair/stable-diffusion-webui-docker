@@ -106,7 +106,7 @@ COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
 
 RUN --mount=type=cache,target=/root/.cache/repos \
-  pip install xformers==0.0.27.post3 --index-url https://download.pytorch.org/whl/cu121
+  pip install xformers==0.0.28 --index-url https://download.pytorch.org/whl/cu121
 
 RUN --mount=type=cache,target=/root/.cache/repos \
   pip install pyngrok  \
