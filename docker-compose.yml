@@ -35,7 +35,7 @@ services:
     build: 
       context: ./services/AUTOMATIC1111
       dockerfile: Dockerfile.rtx
-    image: sd-auto-rtx:1
+    image: sd-auto_rtx:1
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
