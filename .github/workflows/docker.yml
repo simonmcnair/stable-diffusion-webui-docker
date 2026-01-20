@@ -42,7 +42,7 @@ jobs:
            context: services/forge/
 
         -  image: simonmcnair/forge-gtx
-           dockerfile: services/forge/Dockerfile.gtx
+           dockerfile: services/forge/Dockerfile.rtx
            context: services/forge/
 
         -  image: simonmcnair/reforge
@@ -50,7 +50,7 @@ jobs:
            context: services/reforge/
 
         -  image: simonmcnair/reforge-gtx
-           dockerfile: services/reforge/Dockerfile.gtx
+           dockerfile: services/reforge/Dockerfile.rtx
            context: services/reforge/
 
     runs-on: ubuntu-latest
