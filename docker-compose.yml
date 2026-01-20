@@ -115,7 +115,7 @@ services:
     environment:
       - CLI_ARGS=--allow-code --medvram --xformers --enable-insecure-extension-access --api
 
-  auto_gtx_from_image: &automatic_rtx_from_image
+  auto_rtx_from_image: &automatic_rtx_from_image
     <<: *base_service
     profiles: ["auto_rtx_from_image"]
     image: simonmcnair/automatic1111_rtx:master
@@ -140,9 +140,9 @@ services:
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
-  reforge_rtx_from_image: &reforge_from_image
+  reforge_rtx_from_image: &reforge_rtx_from_image
     <<: *base_service
-    profiles: ["reforge_from_image"]
+    profiles: ["reforge_rtx_from_image"]
     image: simonmcnair/reforge_rtx:master
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
@@ -154,9 +154,9 @@ services:
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
-  forge_rtx_from_image: &forge_from_image
+  forge_rtx_from_image: &forge_rtx_from_image
     <<: *base_service
-    profiles: ["forge_from_image"]
+    profiles: ["forge_rtx_from_image"]
     image: simonmcnair/forge_rtx:master
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
