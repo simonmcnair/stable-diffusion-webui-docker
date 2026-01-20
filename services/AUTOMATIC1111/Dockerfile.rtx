@@ -96,14 +96,15 @@ RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
 COPY --from=download --chown=${PUID}:${PGID} /repositories/ ${ROOT}/repositories/
 RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/clip_interrogator/data/* ${ROOT}/interrogate
 
-#RUN --mount=type=cache,target=/root/.cache/repos \
-#  pip install xformers==0.0.28 --index-url https://download.pytorch.org/whl/cu121
-
 RUN --mount=type=cache,target=/root/.cache/repos \
-    pip install ninja &&\
-# Set TORCH_CUDA_ARCH_LIST if running and building on different GPU types
-# NOTE: pytorch must already be installed!
-    pip install -v --no-build-isolation -U git+https://github.com/facebookresearch/xformers.git@main#egg=xformers
+#  pip install xformers==0.0.28 --index-url https://download.pytorch.org/whl/cu121
+  pip install xformers==0.0.28.post3 --index-url https://download.pytorch.org/whl/cu124
+
+#RUN --mount=type=cache,target=/root/.cache/repos \
+#    pip install ninja &&\
+## Set TORCH_CUDA_ARCH_LIST if running and building on different GPU types
+## NOTE: pytorch must already be installed!
+#    pip install -v --no-build-isolation -U git+https://github.com/facebookresearch/xformers.git@main#egg=xformers
 
 RUN --mount=type=cache,target=/root/.cache/repos \
   pip install pyngrok  \
@@ -117,7 +118,6 @@ ENV LD_PRELOAD=libtcmalloc.so
 
 COPY . /docker
 RUN chown -R "$PUID:$PGID" "${ROOT}"
-RUN chown -R "$PUID:$PGID" /docker
 
 WORKDIR ${ROOT}
 ENV NVIDIA_VISIBLE_DEVICES=all
