@@ -23,10 +23,10 @@ jobs:
  #          dockerfile: services/AUTOMATIC1111/Dockerfile.rocm
  #          context: services/AUTOMATIC1111/
 
-        -  profile: "A1111 RTX"
-           image: simonmcnair/AUTOMATIC1111_rtx
-           dockerfile: services/AUTOMATIC1111/Dockerfile.rtx
-           context: services/AUTOMATIC1111/
+ #       -  profile: "A1111 RTX"
+ #          image: simonmcnair/AUTOMATIC1111_rtx
+ #          dockerfile: services/AUTOMATIC1111/Dockerfile.rtx
+ #          context: services/AUTOMATIC1111/
 
         -  profile: "Comfy"
            image: simonmcnair/comfy
