@@ -125,7 +125,7 @@ services:
   auto-rocm_from_image: &auto-rocm_from_image
     <<: *base_service
     profiles: ["auto-rocm_from_image"]
-    image: simonmcnair/automatic1111-rocm:master
+    image: simonmcnair/automatic1111_rocm:master
     devices:
       - "/dev/kfd"
       - "/dev/dri"
@@ -140,10 +140,24 @@ services:
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
+  reforge_rtx_from_image: &reforge_from_image
+    <<: *base_service
+    profiles: ["reforge_from_image"]
+    image: simonmcnair/reforge_rtx:master
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
   forge_from_image: &forge_from_image
     <<: *base_service
     profiles: ["forge_from_image"]
     image: simonmcnair/forge:master
+    environment:
+      - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
+
+  forge_rtx_from_image: &forge_from_image
+    <<: *base_service
+    profiles: ["forge_from_image"]
+    image: simonmcnair/forge_rtx:master
     environment:
       - CLI_ARGS=--allow-code --xformers --enable-insecure-extension-access --api --pin-shared-memory --cuda-malloc --cuda-stream
 
