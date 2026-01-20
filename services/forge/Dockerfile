@@ -2,17 +2,8 @@ FROM alpine/git:2.36.2 AS download
 
 COPY clone.sh /clone.sh
 
-#RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git && \
-#cd stable-diffusion-webui && \
-#git switch dev && \
-#git pull
-
-RUN . /clone.sh stable-diffusion-stability-ai https://github.com/AUTOMATIC1111/stable-diffusion-webui.git fd68e0c3846b07c637c3d57b0c38f06c8485a753 \
+RUN . /clone.sh stable-diffusion-stability-ai https://github.com/w-e-w/stablediffusion.git cf1d67a6fd5ea1aa600c4df58e5b47da45f6bdbf \
   && rm -rf assets data/**/*.png data/**/*.jpg data/**/*.gif
-
-#RUN . /clone.sh stable-diffusion-stability-ai https://github.com/Stability-AI/stablediffusion.git cf1d67a6fd5ea1aa600c4df58e5b47da45f6bdbf \
-#  && rm -rf assets data/**/*.png data/**/*.jpg data/**/*.gif
-
 
 RUN . /clone.sh CodeFormer https://github.com/sczhou/CodeFormer.git c5b4593074ba6214284d6acd5f1719b6c5d739af \
   && rm -rf assets inputs
