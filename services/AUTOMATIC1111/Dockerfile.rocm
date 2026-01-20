@@ -6,8 +6,8 @@ RUN rm -rf "/usr/local/share/boost"
 RUN rm -rf "$AGENT_TOOLSDIRECTORY"
 
 RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git && \
-cd stable-diffusion-webui&& \
-git switch dev&& \
+cd stable-diffusion-webui && \
+git switch dev && \
 git pull
 
 #RUN . /clone.sh stable-diffusion-stability-ai https://github.com/Stability-AI/stablediffusion.git cf1d67a6fd5ea1aa600c4df58e5b47da45f6bdbf \
