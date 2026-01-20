@@ -18,10 +18,10 @@ jobs:
            dockerfile: services/AUTOMATIC1111/Dockerfile
            context: services/AUTOMATIC1111/
     
-        -  profile: "A1111 ROCM"
-           image: simonmcnair/AUTOMATIC1111_rocm
-           dockerfile: services/AUTOMATIC1111/Dockerfile.rocm
-           context: services/AUTOMATIC1111/
+ #       -  profile: "A1111 ROCM"
+ #          image: simonmcnair/AUTOMATIC1111_rocm
+ #          dockerfile: services/AUTOMATIC1111/Dockerfile.rocm
+ #          context: services/AUTOMATIC1111/
 
         -  profile: "A1111 RTX"
            image: simonmcnair/AUTOMATIC1111_rtx
