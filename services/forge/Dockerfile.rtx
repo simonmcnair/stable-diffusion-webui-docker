@@ -68,6 +68,8 @@ RUN if [ "$PUID" -ne "0" ]; then \
 
 ENV ROOT=/stable-diffusion-webui-forge
 
+RUN conda install -y libsqlite=3.48.0
+
 WORKDIR /
 RUN --mount=type=cache,target=/root/.cache/forge-repo \
   git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git && \
