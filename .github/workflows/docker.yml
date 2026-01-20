@@ -13,43 +13,53 @@ jobs:
     strategy:
       matrix:
         include:
-        -  image: simonmcnair/AUTOMATIC1111
+        -  profile: "A1111 Standard"
+           image: simonmcnair/AUTOMATIC1111
            dockerfile: services/AUTOMATIC1111/Dockerfile
            context: services/AUTOMATIC1111/
     
-        -  image: simonmcnair/AUTOMATIC1111_rocm
+        -  profile: "A1111 ROCM"
+           image: simonmcnair/AUTOMATIC1111_rocm
            dockerfile: services/AUTOMATIC1111/Dockerfile.rocm
            context: services/AUTOMATIC1111/
 
-        -  image: simonmcnair/AUTOMATIC1111_rtx
+        -  profile: "A1111 RTX"
+           image: simonmcnair/AUTOMATIC1111_rtx
            dockerfile: services/AUTOMATIC1111/Dockerfile.rtx
            context: services/AUTOMATIC1111/
 
-        -  image: simonmcnair/comfy
+        -  profile: "Comfy"
+           image: simonmcnair/comfy
            dockerfile: services/comfy/Dockerfile
            context: services/comfy/
 
-        -  image: simonmcnair/download
+        -  profile: "Download"
+           image: simonmcnair/download
            dockerfile: services/download/Dockerfile
            context: services/download/
 
-        -  image: simonmcnair/fooocus
+        -  profile: "fooocus"
+           image: simonmcnair/fooocus
            dockerfile: services/fooocus/Dockerfile
            context: services/fooocus/
 
-        -  image: simonmcnair/forge
+        -  profile: "forge"
+           image: simonmcnair/forge
            dockerfile: services/forge/Dockerfile
            context: services/forge/
 
-        -  image: simonmcnair/forge_rtx
+        -  profile: "forge rtx"
+           image: simonmcnair/forge_rtx
            dockerfile: services/forge/Dockerfile.rtx
            context: services/forge/
 
-        -  image: simonmcnair/reforge
+        -  profile: "reforge"
+           image: simonmcnair/reforge
            dockerfile: services/reforge/Dockerfile
            context: services/reforge/
 
-        -  image: simonmcnair/reforge_rtx
+        -  profile: "reforge rtx"
+           image: simonmcnair/reforge_rtx
            dockerfile: services/reforge/Dockerfile.rtx
            context: services/reforge/
 
