@@ -56,16 +56,17 @@ done
 # user with the specified user ID and group ID is created, and the container is run as this user
 if [ -z "$USER_ID" ] || [ -z "$GROUP_ID" ];
 then
-    echo "Running container as $USER..."
+    echo "Running container as root"
     exec "$@"
 else
-    echo "Creating non-root user..."
-    getent group $GROUP_ID > /dev/null 2>&1 || groupadd --gid $GROUP_ID comfyui-user
-    id -u $USER_ID > /dev/null 2>&1 || useradd --uid $USER_ID --gid $GROUP_ID --create-home comfyui-user
-    chown --recursive $USER_ID:$GROUP_ID /opt/comfyui
-    chown --recursive $USER_ID:$GROUP_ID /opt/comfyui-manager
-    export PATH=$PATH:/home/comfyui-user/.local/bin
+#    echo "Creating non-root user..."
+#    getent group $GROUP_ID > /dev/null 2>&1 || groupadd --gid $GROUP_ID comfyui-user
+#    id -u $USER_ID > /dev/null 2>&1 || useradd --uid $USER_ID --gid $GROUP_ID --create-home comfyui-user
+#    chown --recursive $USER_ID:$GROUP_ID /opt/comfyui
+#    chown --recursive $USER_ID:$GROUP_ID /opt/comfyui-manager
+#    export PATH=$PATH:/home/comfyui-user/.local/bin
+#    sudo --set-home --preserve-env=PATH --user \#$USER_ID "$@"
 
-    echo "Running container as $USER..."
-    sudo --set-home --preserve-env=PATH --user \#$USER_ID "$@"
+    echo "Running container as $USER_ID:$GROUP_ID"
+    exec "$@"
 fi

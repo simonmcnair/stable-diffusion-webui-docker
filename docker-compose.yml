@@ -75,21 +75,25 @@ services:
     <<: *base_service
     profiles: ["comfy"]
     container_name: comfy
-    build: ./services/comfy
+    build:
+      context: ./services/comfy/
+      dockerfile: Dockerfile
     image: sd-comfy:latest
+    restart: no
 #    command:
 #      - python main.py --preview-method auto --force-fp16
     volumes:
       - ./data/models:/opt/comfyui/models
-      - ./data/config/configs:/opt/comfyui/user/default/
-      - ./data/config/comfyui_manager/:/opt/comfyui/user/__manager/
       - ./data/config/comfy/custom_nodes:/opt/comfyui/custom_nodes
+      - ./data/config/comfy/user:/opt/comfyui/user
       - ./output/comfy:/opt/comfyui/output
     ports:
       - "${COMFYUI_PORT:-7861}:7861"
     environment:
       - COMFYUI_PATH=/opt/comfyui
       - COMFYUI_MODEL_PATH=/opt/comfyui/models
+      - USER_ID=1000
+      - GROUP_ID=1000
       - CLI_ARGS=
 #      - TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
@@ -124,6 +128,8 @@ services:
     environment:
       - COMFYUI_PATH=/opt/comfyui
       - COMFYUI_MODEL_PATH=/opt/comfyui/models
+#      - USER_ID=1000
+#      - GROUP_ID=1000
 
   reforge: &reforge
     <<: *base_service
