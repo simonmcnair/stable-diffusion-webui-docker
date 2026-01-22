@@ -62,7 +62,6 @@ RUN cd ~/nv && \
   ./configure \
     --enable-gpl \
     --enable-nonfree \
-    --enable-shared \
     --enable-cuda-nvcc \
     --enable-nvenc \
     --enable-nvdec \
@@ -77,7 +76,11 @@ RUN cd ~/nv && \
     --enable-libvorbis \
     --enable-libx264 \
     --enable-libx265 \
-    --disable-static \
+    --enable-static \
+    --disable-shared \
+    --pkg-config-flags="--static" \
+#    --disable-static \
+#    --enable-shared \
 #    --enable-libnpp \ # ERROR: libnpp support is deprecated, version 13.0 and up are not supported \
 #    --enable-libopus \ # not found : install ?
 #    --enable-libvpx \
