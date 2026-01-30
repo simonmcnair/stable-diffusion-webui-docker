@@ -1,7 +1,7 @@
 ARG PYTORCH_VERSION=2.9.1-cuda13.0-cudnn9-devel
 FROM pytorch/pytorch:${PYTORCH_VERSION} AS build
 
-ARG COMFYUI_VERSION=v0.9.2
+ARG COMFYUI_VERSION=v0.11.1
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 RUN python --version
 
