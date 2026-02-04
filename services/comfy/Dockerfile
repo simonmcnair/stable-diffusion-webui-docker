@@ -29,7 +29,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         libjpeg-dev \
         libpng-dev \
-        # pyenv / python build deps
         libssl-dev \
         zlib1g-dev \
         libbz2-dev \
@@ -245,39 +244,6 @@ RUN apt-get update --assume-yes && \
     unzip \
     cmake \
     build-essential \
-#    libssl-dev \
-#    libbz2-dev \
-#    libffi-dev \
-#    libncursesw5-dev \
-#    libreadline-dev \
-#    libsqlite3-dev \
-#    liblzma-dev \
-#    # OpenCV runtime
-##    libgl1-mesa-glx \
-#    libgl1 \
-#    libglx-mesa0 \
-#    libgl1-mesa-dev \
-#    libglu1-mesa \
-##    freeglut3 \
-#    freeglut3-dev \
-#    mesa-utils \
-#    libglib2.0-0 \
-#    libsm6 \
-#    libxext6 \
-#    libc6 \
-#    # FFmpeg runtime libs (NVENC-enabled ffmpeg binary copied in)
-#    libfreetype6 \
-#    libgnutls30 \
-#    libva-wayland2 \
-#    # XCB runtime libraries
-#    libxcb1 \
-#    libxcb-shape0 \
-#    libxcb-shm0 \
-#    libxcb-xfixes0 \
-#    # audio runtime
-##    libasound2 \
-#    libasound2t64 \
-#    libasound2-plugins \
     libsndio7.0 \
     libxv1 \
     libass9 \
@@ -320,7 +286,6 @@ RUN pip install --no-cache-dir \
     compel  \
     psutil \
     nvitop \
-#    https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.11/flash_attn-2.8.3%2Bcu131torch2.9-cp311-cp311-linux_x86_64.whl
     https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.16/flash_attn-2.8.3%2Bcu128torch2.10-cp311-cp311-linux_x86_64.whl
 
 # Clones the ComfyUI repository and checks out the latest release
@@ -348,7 +313,6 @@ RUN pip install --no-cache-dir \
 
 # Pre-install previously used custom nodes requirements from volume
 COPY ./install/merged-requirements.txt* /docker/requirements.txt
-# TODO fix onnx
 RUN sh -c '[ -f /docker/requirements.txt ] && pip install --no-cache-dir -r /docker/requirements.txt  \
     || echo "merged-requirements.txt not found, skipping pre-install."'
 
