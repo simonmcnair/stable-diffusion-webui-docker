@@ -1,28 +1,176 @@
-ARG PYTORCH_VERSION=2.9.1-cuda13.0-cudnn9-devel
-FROM pytorch/pytorch:${PYTORCH_VERSION} AS build
+# syntax=docker/dockerfile:1
 
-ARG COMFYUI_VERSION=v0.11.1
-ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
-RUN python --version
+# NOTE: Building this image require's docker version >= 23.0.
+#
+# For reference:
+# - https://docs.docker.com/build/dockerfile/frontend/#stable-channel
 
-RUN apt update && apt install -y \
-    build-essential \
-    git \
-    git-core \
-    autoconf \
-    automake \
-    cmake \
-    libtool \
-    meson \
-    ninja-build \
+ARG BASE_IMAGE=ubuntu:24.04
+
+FROM ${BASE_IMAGE} as dev-base
+
+ENV BASE_VERSION=2404
+ARG PYTHON_VERSION=3.11.10
+ARG PYTORCH_VERSION=2.10.0
+ARG CUDA_VERSION=12.8
+ARG CUDA_PATH=cu128
+ARG COMFYUI_VERSION=0.12.0
+
+ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1 PIP_NO_CACHE_DIR=1
+ENV PYENV_ROOT=/root/.pyenv
+ENV PATH=${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        ccache \
+        cmake \
+        curl \
+        git \
+        libjpeg-dev \
+        libpng-dev \
+        # pyenv / python build deps
+        libssl-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libffi-dev \
+        liblzma-dev \
+        tk-dev \
+        xz-utils \
+        llvm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pyenv
+RUN git clone https://github.com/pyenv/pyenv.git ${PYENV_ROOT}
+
+# Install Python 3.11
+RUN pyenv install ${PYTHON_VERSION} && \
+    pyenv global ${PYTHON_VERSION} && \
+    python --version
+
+# Remove PEP 668 restriction (safe in containers)
+RUN rm -f /usr/lib/python*/EXTERNALLY-MANAGED
+RUN /usr/sbin/update-ccache-symlinks
+RUN mkdir /opt/ccache && ccache --set-config=cache_dir=/opt/ccache
+RUN pip install --upgrade pip
+
+FROM dev-base as python-deps
+
+COPY requirements.txt requirements-build.txt ./
+# Install Python packages to system Python
+RUN pip install --upgrade --ignore-installed pip setuptools wheel && \
+    pip install cmake pyyaml numpy ipython -r requirements.txt
+
+FROM dev-base as submodule-update
+
+ARG PYTORCH_VERSION
+RUN git clone https://github.com/pytorch/pytorch.git /opt/pytorch && \
+    cd /opt/pytorch && \
+    git fetch origin v${PYTORCH_VERSION} && \
+    git checkout FETCH_HEAD
+WORKDIR /opt/pytorch
+RUN git submodule update --init --recursive
+
+FROM python-deps as pytorch-installs
+
+ARG CUDA_PATH
+ARG INSTALL_CHANNEL=whl/nightly
+# Automatically set by buildx
+ARG TARGETPLATFORM
+
+# INSTALL_CHANNEL whl - release, whl/nightly - nightly, whl/test - test channels
+RUN case ${TARGETPLATFORM} in \
+         "linux/arm64")  pip install --extra-index-url https://download.pytorch.org/whl/cpu/ torch torchvision torchaudio ;; \
+         *)              pip install --index-url https://download.pytorch.org/${INSTALL_CHANNEL}/${CUDA_PATH#.}/ torch torchvision torchaudio ;; \
+    esac
+RUN pip install torchelastic
+RUN IS_CUDA=$(python3 -c 'import torch ; print(torch.cuda._is_compiled())'); \
+    echo "Is torch compiled with cuda: ${IS_CUDA}"; \
+    if test "${IS_CUDA}" != "True" -a ! -z "${CUDA_VERSION}"; then \
+        exit 1; \
+    fi
+
+FROM dev-base as official
+
+ARG PYTORCH_VERSION
+ARG TRITON_VERSION
+ARG TARGETPLATFORM
+ARG CUDA_VERSION
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+ENV PYENV_ROOT=/root/.pyenv
+ENV PATH=${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libjpeg-dev \
+        libpng-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy pyenv + Python runtime + site-packages
+COPY --from=pytorch-installs /root/.pyenv /root/.pyenv
+RUN python --version && pip --version
+
+RUN if test -n "${CUDA_VERSION}" -a "${TARGETPLATFORM}" != "linux/arm64"; then \
+        apt-get update -qq && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
+ENV PYTORCH_VERSION ${PYTORCH_VERSION}
+WORKDIR /workspace
+
+FROM official as dev
+ARG CUDA_VERSION
+ARG BUILD_TYPE=dev
+
+# Install CUDA toolkit
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        wget gnupg2 ca-certificates && \
+    # Add NVIDIA repository
+    NVARCH=$(uname -m | sed 's/x86_64/x86_64/' | sed 's/aarch64/sbsa/') && \
+    wget -qO - https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${BASE_VERSION}/${NVARCH}/3bf863cc.pub | apt-key add - && \
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${BASE_VERSION}/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list && \
+    # Install CUDA toolkit
+    CUDA_PKG_VERSION=$(echo ${CUDA_VERSION} | cut -d'.' -f1,2 | tr '.' '-') && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        cuda-toolkit-${CUDA_PKG_VERSION} && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    # Configure LD
+    echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf.d/cuda.conf && \
+    ldconfig
+
+# Set CUDA environment (always set, needed even if CUDA already in base)
+ENV PATH=/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+ENV CUDA_HOME=/usr/local/cuda
+
+COPY --from=submodule-update /opt/pytorch /opt/pytorch
+
+# ------------------------------------------------------------
+# Build ffmpeg
+# ------------------------------------------------------------
+FROM dev as ffmpeg
+
+#RUN cat /etc/os-release
+#RUN python --version
+
+RUN apt update --assume-yes &&  \
+    apt install --assume-yes \
     pkg-config \
-    texinfo \
-    yasm \
     nasm \
-    wget \
-    unzip \
-    \
-    # FFmpeg / codec headers
+#    autoconf \
+#    automake \
+#    libtool \
+#    meson \
+#    ninja-build \
+#    texinfo \
+#    yasm \
+#    # FFmpeg / codec headers
     libass-dev \
     libfreetype6-dev \
     libgnutls28-dev \
@@ -43,8 +191,6 @@ RUN apt update && apt install -y \
     libunistring-dev \
     zlib1g-dev \
     libc6-dev \
-    \
-    ca-certificates \
     && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -79,11 +225,6 @@ RUN cd ~/nv && \
     --enable-static \
     --disable-shared \
     --pkg-config-flags="--static" \
-#    --disable-static \
-#    --enable-shared \
-#    --enable-libnpp \ # ERROR: libnpp support is deprecated, version 13.0 and up are not supported \
-#    --enable-libopus \ # not found : install ?
-#    --enable-libvpx \
     --prefix=/usr/local \
     --extra-cflags="-I/usr/local/cuda/include" \
     --extra-ldflags="-L/usr/local/cuda/lib64" \
@@ -95,56 +236,67 @@ RUN cd ~/nv && \
 # ------------------------------------------------------------
 # Setup ComfyUI & Manager
 # ------------------------------------------------------------
-FROM pytorch/pytorch:${PYTORCH_VERSION}
+FROM dev as comfy
 
-ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
-ENV PIP_NO_CACHE_DIR=1
-
-RUN apt update --assume-yes && \
-    apt install --assume-yes \
-    git \
-    wget \
-    build-essential \
-    ca-certificates \
+RUN apt-get update --assume-yes && \
+    apt-get install --assume-yes \
     sudo \
-    # OpenCV runtime
-    libgl1-mesa-glx \
-    libgl1-mesa-dev \
-    libglu1-mesa \
-    freeglut3 \
-    mesa-utils \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libc6 \
-    # FFmpeg runtime libs (NVENC-enabled ffmpeg binary copied in)
+    wget \
+    unzip \
+    cmake \
+    build-essential \
+#    libssl-dev \
+#    libbz2-dev \
+#    libffi-dev \
+#    libncursesw5-dev \
+#    libreadline-dev \
+#    libsqlite3-dev \
+#    liblzma-dev \
+#    # OpenCV runtime
+##    libgl1-mesa-glx \
+#    libgl1 \
+#    libglx-mesa0 \
+#    libgl1-mesa-dev \
+#    libglu1-mesa \
+##    freeglut3 \
+#    freeglut3-dev \
+#    mesa-utils \
+#    libglib2.0-0 \
+#    libsm6 \
+#    libxext6 \
+#    libc6 \
+#    # FFmpeg runtime libs (NVENC-enabled ffmpeg binary copied in)
+#    libfreetype6 \
+#    libgnutls30 \
+#    libva-wayland2 \
+#    # XCB runtime libraries
+#    libxcb1 \
+#    libxcb-shape0 \
+#    libxcb-shm0 \
+#    libxcb-xfixes0 \
+#    # audio runtime
+##    libasound2 \
+#    libasound2t64 \
+#    libasound2-plugins \
+    libsndio7.0 \
+    libxv1 \
     libass9 \
-    libfreetype6 \
-    libgnutls30 \
+    libva2 \
+    libva-drm2 \
+    libva-x11-2 \
+    libvdpau1 \
+    libaom3 \
+    libfdk-aac2 \
     libmp3lame0 \
     libvorbis0a \
-    libx264-163 \
+    libvorbisenc2 \
+    libx264-164 \
     libx265-199 \
-    libfdk-aac2 \
-    libxv1 \
-    libva2 \
-    libva-wayland2 \
-    libva-x11-2 \
-    libaom3 \
-    libva-drm2 \
-    libvdpau1 \
-    # XCB runtime libraries
-    libxcb1 \
-    libxcb-shape0 \
-    libxcb-shm0 \
-    libxcb-xfixes0 \
-    # audio runtime
-    libasound2 \
-    libasound2-plugins \
-    libsndio7.0 \
-    && rm -rf /var/lib/apt/lists/*
+    && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /usr/local /usr/local
+COPY --from=ffmpeg /usr/local /usr/local
 
 # Version check
 RUN python -c "import torch; print('Torch CUDA:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available())"
@@ -152,13 +304,12 @@ RUN ldd /usr/local/bin/ffmpeg | grep "not found" && exit 1 || true
 RUN ldconfig && ffmpeg -encoders | grep nvenc
 
 RUN pip install --no-cache-dir \
+    comfy-env \
     ffmpy \
     pillow \
     img2texture \
     PyOpenGL \
     PyOpenGL_accelerate \
-    opencv-python \
-    opencv-contrib-python \
     diffusers \
     triton \
     torchsde \
@@ -169,12 +320,13 @@ RUN pip install --no-cache-dir \
     compel  \
     psutil \
     nvitop \
-    https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.11/flash_attn-2.8.3%2Bcu131torch2.9-cp311-cp311-linux_x86_64.whl
+#    https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.11/flash_attn-2.8.3%2Bcu131torch2.9-cp311-cp311-linux_x86_64.whl
+    https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.16/flash_attn-2.8.3%2Bcu128torch2.10-cp311-cp311-linux_x86_64.whl
 
 # Clones the ComfyUI repository and checks out the latest release
 RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /opt/comfyui && \
     cd /opt/comfyui && \
-    git fetch origin ${COMFYUI_VERSION} && \
+    git fetch origin v${COMFYUI_VERSION} && \
     git checkout FETCH_HEAD
 
 # Clones the ComfyUI Manager repository; ComfyUI Manager is an extension for ComfyUI that enables users to install
@@ -190,12 +342,13 @@ RUN git clone --depth=1 https://github.com/Comfy-Org/ComfyUI-Manager.git /opt/co
 #    git checkout FETCH_HEAD
 
 # Installs the required Python packages for both ComfyUI and the ComfyUI Manager
-RUN pip install \
+RUN pip install --no-cache-dir \
     --requirement /opt/comfyui/requirements.txt \
     --requirement /opt/comfyui-manager/requirements.txt
 
 # Pre-install previously used custom nodes requirements from volume
 COPY ./install/merged-requirements.txt* /docker/requirements.txt
+# TODO fix onnx
 RUN sh -c '[ -f /docker/requirements.txt ] && pip install --no-cache-dir -r /docker/requirements.txt  \
     || echo "merged-requirements.txt not found, skipping pre-install."'
 
@@ -211,7 +364,7 @@ ENV PYTHONPATH="\${PYTHONPATH}:\${PWD}" CLI_ARGS=""
 EXPOSE 7861
 ARG USER_ID
 ARG GROUP_ID
-RUN chown -R $USER_ID:$GROUP_ID /opt/conda
+RUN chown -R $USER_ID:$GROUP_ID $PYENV_ROOT
 RUN chown -R $USER_ID:$GROUP_ID /opt/comfyui \
  && chmod -R u+rwx /opt/comfyui
 RUN chown -R $USER_ID:$GROUP_ID /opt/comfyui-manager \
@@ -235,4 +388,4 @@ ENTRYPOINT ["/bin/bash", "/docker/entrypoint.sh"]
 # On startup, ComfyUI is started at its default port; the IP address is changed from localhost to 0.0.0.0, because Docker is only forwarding traffic
 # to the IP address it assigns to the container, which is unknown at build time; listening to 0.0.0.0 means that ComfyUI listens to all incoming
 # traffic; the auto-launch feature is disabled, because we do not want (nor is it possible) to open a browser window in a Docker container
-CMD ["/opt/conda/bin/python", "main.py", "--listen", "0.0.0.0", "--port", "7861", "--disable-auto-launch"]
+CMD ["python", "main.py", "--listen", "0.0.0.0", "--port", "7861", "--disable-auto-launch"]

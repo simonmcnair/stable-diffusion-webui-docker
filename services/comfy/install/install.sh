@@ -8,9 +8,10 @@ for f in ${REQ_PATH}/*/requirements.txt; do \
   node=$(basename $(dirname "$f")); \
   cp "$f" ${BUILD_PATH}/reqs/${node}-requirements.txt; \
 done
-find ${BUILD_PATH}/reqs -maxdepth 1 -name "*requirements.txt" -exec cat {} + \
+find ${BUILD_PATH}/reqs -maxdepth 1 -name "*requirements.txt" -exec sh -c 'cat "$1"; echo' _ {} \; \
   | grep -v '^#' \
   | grep -v '^git' \
+  | grep -Ev 'platform_system|platform_machine|sys_platform|google|onnx|opencv-python-headless\[ffmpeg\]' \
   | sed 's/==.*//' \
   | awk '{print tolower($0)}' \
   | sed 's/[[:space:]]//g' \

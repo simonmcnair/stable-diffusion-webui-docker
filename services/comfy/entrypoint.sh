@@ -45,7 +45,7 @@ do
             CUSTOM_NODE_NAME=${CUSTOM_NODE_DIRECTORY##*/}
             CUSTOM_NODE_NAME=${CUSTOM_NODE_NAME//[-_]/ }
             echo "Installing requirements for $CUSTOM_NODE_NAME..."
-            pip install --requirement "$CUSTOM_NODE_DIRECTORY/requirements.txt"
+            pip install --no-cache-dir --requirement "$CUSTOM_NODE_DIRECTORY/requirements.txt"
         fi
     fi
 done
