@@ -5,6 +5,9 @@
 # For reference:
 # - https://docs.docker.com/build/dockerfile/frontend/#stable-channel
 
+# ------------------------------------------------------------
+# Pytorch
+# ------------------------------------------------------------
 ARG BASE_IMAGE=ubuntu:24.04
 
 FROM ${BASE_IMAGE} as dev-base
@@ -55,6 +58,7 @@ RUN /usr/sbin/update-ccache-symlinks
 RUN mkdir /opt/ccache && ccache --set-config=cache_dir=/opt/ccache
 RUN pip install --upgrade pip
 
+# ------------------------------------------------------------
 FROM dev-base as python-deps
 
 COPY requirements.txt requirements-build.txt ./
@@ -62,6 +66,7 @@ COPY requirements.txt requirements-build.txt ./
 RUN pip install --upgrade --ignore-installed pip setuptools wheel && \
     pip install cmake pyyaml numpy ipython -r requirements.txt
 
+# ------------------------------------------------------------
 FROM dev-base as submodule-update
 
 ARG PYTORCH_VERSION
@@ -72,6 +77,7 @@ RUN git clone https://github.com/pytorch/pytorch.git /opt/pytorch && \
 WORKDIR /opt/pytorch
 RUN git submodule update --init --recursive
 
+# ------------------------------------------------------------
 FROM python-deps as pytorch-installs
 
 ARG CUDA_PATH
@@ -91,6 +97,7 @@ RUN IS_CUDA=$(python3 -c 'import torch ; print(torch.cuda._is_compiled())'); \
         exit 1; \
     fi
 
+# ------------------------------------------------------------
 FROM dev-base as official
 
 ARG PYTORCH_VERSION
@@ -123,6 +130,9 @@ ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
 ENV PYTORCH_VERSION ${PYTORCH_VERSION}
 WORKDIR /workspace
 
+# ------------------------------------------------------------
+# CUDA
+# ------------------------------------------------------------
 FROM official as dev
 ARG CUDA_VERSION
 ARG BUILD_TYPE=dev
@@ -148,28 +158,18 @@ ENV PATH=/usr/local/cuda/bin:${PATH}
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 ENV CUDA_HOME=/usr/local/cuda
 
+# Copy pytorch
 COPY --from=submodule-update /opt/pytorch /opt/pytorch
 
 # ------------------------------------------------------------
-# Build ffmpeg
+# ffmpeg
 # ------------------------------------------------------------
 FROM dev as ffmpeg
-
-#RUN cat /etc/os-release
-#RUN python --version
 
 RUN apt update --assume-yes &&  \
     apt install --assume-yes \
     pkg-config \
     nasm \
-#    autoconf \
-#    automake \
-#    libtool \
-#    meson \
-#    ninja-build \
-#    texinfo \
-#    yasm \
-#    # FFmpeg / codec headers
     libass-dev \
     libfreetype6-dev \
     libgnutls28-dev \
@@ -233,9 +233,12 @@ RUN cd ~/nv && \
   make install && ldconfig
 
 # ------------------------------------------------------------
-# Setup ComfyUI & Manager
+# ComfyUI & Manager
 # ------------------------------------------------------------
 FROM dev as comfy
+
+# Copy ffmpeg
+COPY --from=ffmpeg /usr/local /usr/local
 
 RUN apt-get update --assume-yes && \
     apt-get install --assume-yes \
@@ -262,9 +265,7 @@ RUN apt-get update --assume-yes && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=ffmpeg /usr/local /usr/local
-
-# Version check
+# Version & libs check
 RUN python -c "import torch; print('Torch CUDA:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available())"
 RUN ldd /usr/local/bin/ffmpeg | grep "not found" && exit 1 || true
 RUN ldconfig && ffmpeg -encoders | grep nvenc
