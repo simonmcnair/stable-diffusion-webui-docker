@@ -66,14 +66,14 @@ RUN if [ "$PUID" -ne "0" ]; then \
       echo "root group detected" ; \
     fi
 
-ENV ROOT=/stable-diffusion-webui-forge
+ENV ROOT=/stable-diffusion-webui-neo
 
 RUN conda install -y libsqlite=3.48.0
 
 WORKDIR /
 RUN --mount=type=cache,target=/root/.cache/forge-repo \
-  git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git && \
-  cd stable-diffusion-webui-forge && \
+  git clone https://github.com/Haoming02/sd-webui-forge-classic sd-webui-forge-neo --branch neo && \
+  cd stable-diffusion-webui-neo && \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
