@@ -4,3 +4,4 @@
 # VSCode specific
 *.code-workspace
 /.vscode
+gluetunconfig/*
