@@ -3,24 +3,24 @@
 set -Eeuo pipefail
 
 # TODO: move all mkdir -p ?
-mkdir -p /data/config/forge/scripts/
+mkdir -p /data/config/neo/scripts/
 # mount scripts individually
 
 echo $ROOT
 ls -lha $ROOT
 
 find "${ROOT}/scripts/" -maxdepth 1 -type l -delete
-cp -vrfTs /data/config/forge/scripts/ "${ROOT}/scripts/"
+cp -vrfTs /data/config/neo/scripts/ "${ROOT}/scripts/"
 
 # Set up config file
-python /docker/config.py /data/config/forge/config.json
+python /docker/config.py /data/config/neo/config.json
 
-if [ ! -f /data/config/forge/ui-config.json ]; then
-  echo '{}' >/data/config/forge/ui-config.json
+if [ ! -f /data/config/neo/ui-config.json ]; then
+  echo '{}' >/data/config/neo/ui-config.json
 fi
 
-if [ ! -f /data/config/forge/styles.csv ]; then
-  touch /data/config/forge/styles.csv
+if [ ! -f /data/config/neo/styles.csv ]; then
+  touch /data/config/neo/styles.csv
 fi
 
 # copy models from original models folder
@@ -35,11 +35,11 @@ MOUNTS["${USER_HOME}/.cache"]="/data/.cache"
 MOUNTS["${ROOT}/models"]="/data/models"
 
 MOUNTS["${ROOT}/embeddings"]="/data/embeddings"
-MOUNTS["${ROOT}/config.json"]="/data/config/forge/config.json"
-MOUNTS["${ROOT}/ui-config.json"]="/data/config/forge/ui-config.json"
-MOUNTS["${ROOT}/styles.csv"]="/data/config/forge/styles.csv"
-MOUNTS["${ROOT}/extensions"]="/data/config/forge/extensions"
-MOUNTS["${ROOT}/config_states"]="/data/config/forge/config_states"
+MOUNTS["${ROOT}/config.json"]="/data/config/neo/config.json"
+MOUNTS["${ROOT}/ui-config.json"]="/data/config/neo/ui-config.json"
+MOUNTS["${ROOT}/styles.csv"]="/data/config/neo/styles.csv"
+MOUNTS["${ROOT}/extensions"]="/data/config/neo/extensions"
+MOUNTS["${ROOT}/config_states"]="/data/config/neo/config_states"
 
 MOUNTS["${ROOT}/outputs"]="/output"
 MOUNTS["${ROOT}/output"]="/output"
@@ -79,10 +79,10 @@ for installscript in "${list[@]}"; do
   PYTHONPATH=${ROOT} python "$installscript"
 done
 
-if [ -f "/data/config/forge/startup.sh" ]; then
+if [ -f "/data/config/neo/startup.sh" ]; then
   pushd ${ROOT}
   echo "Running startup script"
-  . /data/config/forge/startup.sh
+  . /data/config/neo/startup.sh
   popd
 fi
 
