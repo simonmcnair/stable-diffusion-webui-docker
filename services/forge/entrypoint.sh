@@ -41,6 +41,9 @@ MOUNTS["${ROOT}/styles.csv"]="/data/config/forge/styles.csv"
 MOUNTS["${ROOT}/extensions"]="/data/config/forge/extensions"
 MOUNTS["${ROOT}/config_states"]="/data/config/forge/config_states"
 
+MOUNTS["${ROOT}/outputs"]="/output"
+MOUNTS["${ROOT}/output"]="/output"
+
 # extra hacks
 MOUNTS["${ROOT}/repositories/CodeFormer/weights/facelib"]="/data/.cache"
 
