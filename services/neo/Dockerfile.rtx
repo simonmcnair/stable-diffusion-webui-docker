@@ -72,23 +72,21 @@ RUN conda install -y libsqlite=3.48.0
 
 WORKDIR /
 RUN --mount=type=cache,target=/root/.cache/forge-repo \
-  git clone https://github.com/Haoming02/sd-webui-forge-classic sd-webui-forge-neo --branch neo && \
-  cd stable-diffusion-webui-neo && \
-  sed -i '/torch/d' requirements_versions.txt && \
-  pip install -r requirements_versions.txt
+  git clone --branch neo https://github.com/Haoming02/sd-webui-forge-classic.git  ${ROOT} && \
+  cd ${ROOT} && \
+  sed -i '/torch/d' requirements.txt && \
+  pip install -r requirements.txt && \
+  pip install gradio==4.40.0
 
-RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
-      echo Python 3.10 detected; \
-      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
-    elif [ -d "/opt/conda/lib/python3.11" ]; then \
-      echo Python 3.11 detected; \
-      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
-    fi && \
-  # mv ${ROOT}/style.css ${ROOT}/user.css && \
-  # one of the ugliest hacks I ever wrote \
-  # updated from 3.10.to 3.11
-  git config --global --add safe.directory '*'
-
+RUN git config --global --add safe.directory '*' && \
+    # Dynamically find the gradio routes file regardless of Python version
+    GRADIO_PATH=$(python -c "import gradio; print(gradio.__path__[0])" 2>/dev/null) || true && \
+    if [ -n "$GRADIO_PATH" ]; then \
+        echo "Patching Gradio at $GRADIO_PATH"; \
+        sed -i 's/in_app_dir = .*/in_app_dir = True/g' "$GRADIO_PATH/routes.py"; \
+    else \
+        echo "Gradio not found, skipping patch."; \
+    fi
 
 
 # drop permissions (if build targets non root)

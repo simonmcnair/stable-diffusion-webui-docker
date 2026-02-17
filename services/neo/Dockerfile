@@ -74,19 +74,15 @@ RUN --mount=type=cache,target=/root/.cache/forge-repo \
   sed -i '/torch/d' requirements_versions.txt && \
   pip install -r requirements_versions.txt
 
-RUN if [ -d "/opt/conda/lib/python3.10" ]; then \
-      echo Python 3.10 detected; \
-      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.10/site-packages/gradio/routes.py  ;\
-    elif [ -d "/opt/conda/lib/python3.11" ]; then \
-      echo Python 3.11 detected; \
-      sed -i 's/in_app_dir = .*/in_app_dir = True/g' /opt/conda/lib/python3.11/site-packages/gradio/routes.py ;\
-    fi && \
-  # mv ${ROOT}/style.css ${ROOT}/user.css && \
-  # one of the ugliest hacks I ever wrote \
-  # updated from 3.10.to 3.11
-  git config --global --add safe.directory '*'
-
-
+RUN git config --global --add safe.directory '*' && \
+    # Dynamically find the gradio routes file regardless of Python version
+    GRADIO_PATH=$(python -c "import gradio; print(gradio.__path__[0])" 2>/dev/null) || true && \
+    if [ -n "$GRADIO_PATH" ]; then \
+        echo "Patching Gradio at $GRADIO_PATH"; \
+        sed -i 's/in_app_dir = .*/in_app_dir = True/g' "$GRADIO_PATH/routes.py"; \
+    else \
+        echo "Gradio not found, skipping patch."; \
+    fi
 
 # drop permissions (if build targets non root)
 USER $PUID:$PGID

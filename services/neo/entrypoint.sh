@@ -26,8 +26,15 @@ fi
 # copy models from original models folder
 mkdir -p /data/models/VAE-approx/ /data/models/karlo/
 
-rsync -a --info=NAME ${ROOT}/models/VAE-approx/ /data/models/VAE-approx/
-rsync -a --info=NAME ${ROOT}/models/karlo/ /data/models/karlo/
+# Sync only if source exists
+if [ -d "${ROOT}/models/VAE-approx" ]; then
+    rsync -a --info=NAME "${ROOT}/models/VAE-approx/" "/data/models/VAE-approx/"
+fi
+
+if [ -d "${ROOT}/models/karlo" ]; then
+    rsync -a --info=NAME "${ROOT}/models/karlo/" "/data/models/karlo/"
+fi
+
 
 declare -A MOUNTS
 
