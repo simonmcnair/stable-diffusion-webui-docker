@@ -12,7 +12,11 @@ a111:
   clip: models/CLIPEncoder
   embeddings: embeddings
   unet: models/unet
-  upscale_models: models/upscale_models
+  upscale_models: |
+    models/upscale_models
+    models/upscale_models/RealESRGAN
+    models/upscale_models/SwinIR
+    models/upscale_models/GFPGAN
   diffusion_models: models/diffusion_models
   text_encoders: models/text_encoders
   clip_vision: models/clip_vision

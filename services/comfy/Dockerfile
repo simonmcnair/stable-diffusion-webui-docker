@@ -10,14 +10,15 @@
 # ------------------------------------------------------------
 ARG BASE_IMAGE=ubuntu:24.04
 
-FROM ${BASE_IMAGE} as dev-base
+FROM ${BASE_IMAGE} AS dev-base
 
 ENV BASE_VERSION=2404
 ARG PYTHON_VERSION=3.11.10
 ARG PYTORCH_VERSION=2.10.0
+ARG TORCHVISION_VERSION=0.25.0
 ARG CUDA_VERSION=12.8
 ARG CUDA_PATH=cu128
-ARG COMFYUI_VERSION=0.12.0
+ARG COMFYUI_VERSION=0.16.3
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1 PIP_NO_CACHE_DIR=1
 ENV PYENV_ROOT=/root/.pyenv
@@ -59,7 +60,7 @@ RUN mkdir /opt/ccache && ccache --set-config=cache_dir=/opt/ccache
 RUN pip install --upgrade pip
 
 # ------------------------------------------------------------
-FROM dev-base as python-deps
+FROM dev-base AS python-deps
 
 COPY requirements.txt requirements-build.txt ./
 # Install Python packages to system Python
@@ -67,7 +68,7 @@ RUN pip install --upgrade --ignore-installed pip setuptools wheel && \
     pip install cmake pyyaml numpy ipython -r requirements.txt
 
 # ------------------------------------------------------------
-FROM dev-base as submodule-update
+FROM dev-base AS submodule-update
 
 ARG PYTORCH_VERSION
 RUN git clone https://github.com/pytorch/pytorch.git /opt/pytorch && \
@@ -78,17 +79,24 @@ WORKDIR /opt/pytorch
 RUN git submodule update --init --recursive
 
 # ------------------------------------------------------------
-FROM python-deps as pytorch-installs
+FROM python-deps AS pytorch-installs
 
 ARG CUDA_PATH
-ARG INSTALL_CHANNEL=whl/nightly
+ARG INSTALL_CHANNEL=whl
+#ARG INSTALL_CHANNEL=whl/nightly
 # Automatically set by buildx
 ARG TARGETPLATFORM
 
 # INSTALL_CHANNEL whl - release, whl/nightly - nightly, whl/test - test channels
 RUN case ${TARGETPLATFORM} in \
-         "linux/arm64")  pip install --extra-index-url https://download.pytorch.org/whl/cpu/ torch torchvision torchaudio ;; \
-         *)              pip install --index-url https://download.pytorch.org/${INSTALL_CHANNEL}/${CUDA_PATH#.}/ torch torchvision torchaudio ;; \
+         "linux/arm64")  pip install --extra-index-url https://download.pytorch.org/whl/cpu/  \
+                            torch==${PYTORCH_VERSION}+${CUDA_PATH} \
+                            torchvision==${TORCHVISION_VERSION}+${CUDA_PATH} \
+                            torchaudio==${PYTORCH_VERSION}+${CUDA_PATH} ;; \
+         *)              pip install --index-url https://download.pytorch.org/${INSTALL_CHANNEL}/${CUDA_PATH#.}/ \
+                            torch==${PYTORCH_VERSION}+${CUDA_PATH} \
+                            torchvision==${TORCHVISION_VERSION}+${CUDA_PATH} \
+                            torchaudio==${PYTORCH_VERSION}+${CUDA_PATH} ;; \
     esac
 RUN pip install torchelastic
 RUN IS_CUDA=$(python3 -c 'import torch ; print(torch.cuda._is_compiled())'); \
@@ -98,7 +106,7 @@ RUN IS_CUDA=$(python3 -c 'import torch ; print(torch.cuda._is_compiled())'); \
     fi
 
 # ------------------------------------------------------------
-FROM dev-base as official
+FROM dev-base AS official
 
 ARG PYTORCH_VERSION
 ARG TRITON_VERSION
@@ -123,17 +131,17 @@ RUN if test -n "${CUDA_VERSION}" -a "${TARGETPLATFORM}" != "linux/arm64"; then \
         DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc && \
         rm -rf /var/lib/apt/lists/*; \
     fi
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
-ENV PYTORCH_VERSION ${PYTORCH_VERSION}
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ENV PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
+ENV PYTORCH_VERSION=${PYTORCH_VERSION}
 WORKDIR /workspace
 
 # ------------------------------------------------------------
 # CUDA
 # ------------------------------------------------------------
-FROM official as dev
+FROM official AS dev
 ARG CUDA_VERSION
 ARG BUILD_TYPE=dev
 
@@ -164,7 +172,7 @@ COPY --from=submodule-update /opt/pytorch /opt/pytorch
 # ------------------------------------------------------------
 # ffmpeg
 # ------------------------------------------------------------
-FROM dev as ffmpeg
+FROM dev AS ffmpeg
 
 RUN apt update --assume-yes &&  \
     apt install --assume-yes \
@@ -235,7 +243,7 @@ RUN cd ~/nv && \
 # ------------------------------------------------------------
 # ComfyUI & Manager
 # ------------------------------------------------------------
-FROM dev as comfy
+FROM dev AS comfy
 
 # Copy ffmpeg
 COPY --from=ffmpeg /usr/local /usr/local
@@ -266,7 +274,7 @@ RUN apt-get update --assume-yes && \
     rm -rf /var/lib/apt/lists/*
 
 # Version & libs check
-RUN python -c "import torch; print('Torch CUDA:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available())"
+RUN python -c "import torch; import torchaudio; print('Torch:', torch.__version__); print('Audio:', torchaudio.__version__); print('CUDA:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available())"
 RUN ldd /usr/local/bin/ffmpeg | grep "not found" && exit 1 || true
 RUN ldconfig && ffmpeg -encoders | grep nvenc
 
@@ -317,16 +325,8 @@ COPY ./install/merged-requirements.txt* /docker/requirements.txt
 RUN sh -c '[ -f /docker/requirements.txt ] && pip install --no-cache-dir -r /docker/requirements.txt  \
     || echo "merged-requirements.txt not found, skipping pre-install."'
 
-# Clean up
+# Clean up & permissions
 RUN rm -rf /root/.cache/pip
-
-# Sets the working directory to the ComfyUI directory
-WORKDIR /opt/comfyui
-COPY . /docker/
-RUN chmod u+x /docker/entrypoint.sh && cp /docker/extra_model_paths.yaml /opt/comfyui
-
-ENV PYTHONPATH="\${PYTHONPATH}:\${PWD}" CLI_ARGS=""
-EXPOSE 7861
 ARG USER_ID
 ARG GROUP_ID
 RUN chown -R $USER_ID:$GROUP_ID $PYENV_ROOT
@@ -343,6 +343,13 @@ RUN mkdir -p /.cache/uv \
 RUN mkdir -p /.config \
  && chown -R $USER_ID:$GROUP_ID /.config \
  && chmod -R u+rwx /.config
+
+# Sets the working directory to the ComfyUI directory
+WORKDIR /opt/comfyui
+COPY . /docker/
+RUN chmod u+x /docker/entrypoint.sh && cp /docker/extra_model_paths.yaml /opt/comfyui
+ENV PYTHONPATH="\${PYTHONPATH}:\${PWD}" CLI_ARGS=""
+EXPOSE 7861
 USER $USER_ID
 
 # Adds the startup script to the container; the startup script will create all necessary directories in the models and custom nodes volumes that were
